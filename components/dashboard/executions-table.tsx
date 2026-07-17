@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import type { ExecutionSummary } from "@/lib/data";
+import type { ExecutionSummary } from "@/lib/types";
 import { formatDuration, formatRelativeTime } from "@/lib/utils";
 
 function statusTone(status: ExecutionSummary["status"]) {

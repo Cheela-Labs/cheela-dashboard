@@ -1,0 +1,52 @@
+@import "tailwindcss";
+@import "./theme.css";
+
+:root {
+	--background: #090909;
+	--foreground: #f5f5f5;
+	--surface: #111111;
+	--border: #232323;
+	--primary: #d4a017;
+	--primary-hover: #e3b328;
+	--muted: #9a9a9a;
+}
+
+html {
+	scroll-behavior: smooth;
+}
+
+body::before {
+	content: "";
+	position: fixed;
+	inset: 0;
+	pointer-events: none;
+	opacity: 0.03;
+	background-image:
+		radial-gradient(circle at 20% 20%, white 1px, transparent 0),
+		radial-gradient(circle at 80% 40%, white 1px, transparent 0);
+	background-size: 120px 120px;
+}
+
+body {
+	background: var(--background);
+	color: var(--foreground);
+	font-family: var(--font-geist-sans), system-ui, sans-serif;
+	min-height: 100vh;
+	overflow-x: hidden;
+}
+
+code,
+pre,
+kbd,
+samp {
+	font-family: var(--font-geist-mono), monospace;
+}
+
+* {
+	border-color: var(--border);
+}
+
+::selection {
+	background: var(--primary);
+	color: black;
+}

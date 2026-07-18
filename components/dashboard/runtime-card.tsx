@@ -1,8 +1,8 @@
 import { Boxes, Radio } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatRelativeTime } from "@/lib/utils";
-import Link from "next/link";
 
 type RuntimeCardData = {
 	runtimeId: string;
@@ -13,6 +13,11 @@ type RuntimeCardData = {
 	modelName: string;
 	status: "healthy" | "degraded" | "offline";
 	updatedAt: string;
+	deployment?: {
+		version?: number;
+		status: "active";
+		deployedAt?: string;
+	} | null;
 };
 
 function statusTone(status: RuntimeCardData["status"]) {
@@ -59,6 +64,12 @@ export function RuntimeCard({ runtime }: { runtime: RuntimeCardData }) {
 						{runtime.tier} transport
 					</span>
 					<span>{formatRelativeTime(runtime.updatedAt)}</span>
+				</div>
+				<div className="text-xs text-[var(--muted)]">
+					Deployment{" "}
+					{runtime.deployment
+						? `v${runtime.deployment.version} · active`
+						: "not deployed"}
 				</div>
 			</Link>
 		</Card>

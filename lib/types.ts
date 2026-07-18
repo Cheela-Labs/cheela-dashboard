@@ -11,6 +11,11 @@ export type RuntimeSummary = {
 	status?: "healthy" | "degraded" | "offline";
 	updatedAt: string;
 	createdAt?: string;
+	deployment?: {
+		version?: number;
+		status: "active";
+		deployedAt?: string;
+	} | null;
 };
 
 export type ExecutionSummary = {
@@ -73,6 +78,11 @@ export function normalizeRuntime(runtime: RuntimeSummary): RuntimeSummary & {
 	providerName: string;
 	modelName: string;
 	status: "healthy" | "degraded" | "offline";
+	deployment?: {
+		version?: number;
+		status: "active";
+		deployedAt?: string;
+	} | null;
 } {
 	const capabilityNames = runtime.capabilities.map((cap) =>
 		typeof cap === "string" ? cap : cap.name,
@@ -83,7 +93,9 @@ export function normalizeRuntime(runtime: RuntimeSummary): RuntimeSummary & {
 			: runtime.provider.provider;
 	const modelName =
 		runtime.model ??
-		(typeof runtime.provider === "object" ? runtime.provider.model : undefined) ??
+		(typeof runtime.provider === "object"
+			? runtime.provider.model
+			: undefined) ??
 		"—";
 
 	return {
@@ -92,5 +104,6 @@ export function normalizeRuntime(runtime: RuntimeSummary): RuntimeSummary & {
 		providerName,
 		modelName,
 		status: runtime.status ?? "healthy",
+		deployment: runtime.deployment,
 	};
 }

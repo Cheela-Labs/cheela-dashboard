@@ -55,6 +55,14 @@ export default async function RuntimeDetailPage({
 						<h2 className="text-lg font-medium text-white">Configuration</h2>
 						<dl className="space-y-4 text-sm">
 							<div className="flex justify-between gap-4 border-b border-[var(--border)] pb-3">
+								<dt className="text-[var(--muted)]">Deployment</dt>
+								<dd className="text-white">
+									{runtime.deployment
+										? `v${runtime.deployment.version} · ${runtime.deployment.status}`
+										: "Not deployed"}
+								</dd>
+							</div>
+							<div className="flex justify-between gap-4 border-b border-[var(--border)] pb-3">
 								<dt className="text-[var(--muted)]">Tier</dt>
 								<dd className="text-white">{runtime.tier}</dd>
 							</div>

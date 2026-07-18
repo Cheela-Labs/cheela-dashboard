@@ -1,5 +1,5 @@
-import { FadeIn } from "@/components/motion/fade-in";
 import { RegisterRuntimeForm } from "@/components/dashboard/register-runtime-form";
+import { FadeIn } from "@/components/motion/fade-in";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -10,7 +10,7 @@ export default function NewRuntimePage() {
 				<PageHeader
 					eyebrow="Registry"
 					title="Register runtime"
-					description="Store metadata for a customer runtime. Cheela will sign free-tier HTTPS requests or accept a Pro outbound session."
+					description="Create a runtime identity and API key. Configure provider, model, and capabilities locally in cheela.config.ts and deploy with the CLI."
 					actions={
 						<Button variant="secondary" href="/runtimes">
 							Back to runtimes

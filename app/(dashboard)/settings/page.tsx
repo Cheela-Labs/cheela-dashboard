@@ -1,5 +1,5 @@
-import { FadeIn } from "@/components/motion/fade-in";
 import { UpgradeButton } from "@/components/billing/upgrade-button";
+import { FadeIn } from "@/components/motion/fade-in";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { getApiUrl } from "@/lib/api-url";
@@ -48,7 +48,8 @@ export default async function SettingsPage() {
 						<h2 className="text-lg font-medium text-white">API connection</h2>
 						<p className="text-sm leading-6 text-[var(--muted)]">
 							Dashboard requests use your Clerk session JWT. The server verifies
-							it with <code className="text-[var(--primary)]">CLERK_SECRET_KEY</code>.
+							it with{" "}
+							<code className="text-[var(--primary)]">CLERK_SECRET_KEY</code>.
 						</p>
 						<div className="rounded-[16px] border border-[var(--border)] bg-black/40 p-4 font-mono text-xs text-[var(--muted)]">
 							{getApiUrl()}
@@ -63,7 +64,9 @@ export default async function SettingsPage() {
 								</div>
 								<div className="flex justify-between gap-4">
 									<dt className="text-[var(--muted)]">Executions today</dt>
-									<dd className="text-white">{formatNumber(usage.executions)}</dd>
+									<dd className="text-white">
+										{formatNumber(usage.executions)}
+									</dd>
 								</div>
 								<div className="flex justify-between gap-4">
 									<dt className="text-[var(--muted)]">Capability calls</dt>

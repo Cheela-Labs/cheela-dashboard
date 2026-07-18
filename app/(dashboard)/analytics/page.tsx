@@ -108,7 +108,9 @@ export default async function AnalyticsPage() {
 								</p>
 							</div>
 							{capabilityEntries.length === 0 ? (
-								<p className="text-sm text-[var(--muted)]">No capability calls yet.</p>
+								<p className="text-sm text-[var(--muted)]">
+									No capability calls yet.
+								</p>
 							) : (
 								<CapabilityBars data={data.popularCapabilities} />
 							)}
@@ -127,7 +129,9 @@ export default async function AnalyticsPage() {
 							</div>
 							<div className="space-y-3">
 								{runtimeEntries.length === 0 ? (
-									<p className="text-sm text-[var(--muted)]">No runtime usage yet.</p>
+									<p className="text-sm text-[var(--muted)]">
+										No runtime usage yet.
+									</p>
 								) : (
 									runtimeEntries.map(([runtimeId, count]) => (
 										<div

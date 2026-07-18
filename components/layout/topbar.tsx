@@ -16,9 +16,9 @@ export function Topbar({ title }: { title?: string }) {
 					<div className="mt-1 text-sm font-medium text-white">
 						{title ?? "Control plane"}
 					</div>
-					<div className="mt-1 hidden font-mono text-[11px] text-[var(--muted)] sm:block">
+					{/* <div className="mt-1 hidden font-mono text-[11px] text-[var(--muted)] sm:block">
 						API · {getApiUrl()}
-					</div>
+					</div> */}
 				</div>
 
 				<div className="flex items-center gap-3">

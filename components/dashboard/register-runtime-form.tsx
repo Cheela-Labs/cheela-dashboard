@@ -1,7 +1,7 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useCheelaApi } from "@/lib/use-cheela-api";
@@ -11,6 +11,7 @@ export function RegisterRuntimeForm() {
 	const router = useRouter();
 	const [error, setError] = useState<string | null>(null);
 	const [secret, setSecret] = useState<string | null>(null);
+	const [apiKey, setApiKey] = useState<string | null>(null);
 	const [runtimeId, setRuntimeId] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 
@@ -30,6 +31,7 @@ export function RegisterRuntimeForm() {
 			const result = await request<{
 				runtimeId: string;
 				secret: string;
+				apiKey: string;
 			}>("/v1/runtimes", {
 				method: "POST",
 				body: JSON.stringify({
@@ -47,6 +49,7 @@ export function RegisterRuntimeForm() {
 
 			setRuntimeId(result.runtimeId);
 			setSecret(result.secret);
+			setApiKey(result.apiKey);
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Registration failed");
 		} finally {
@@ -54,7 +57,7 @@ export function RegisterRuntimeForm() {
 		}
 	}
 
-	if (secret && runtimeId) {
+	if (secret && apiKey && runtimeId) {
 		return (
 			<Card className="max-w-3xl space-y-4 p-6 sm:p-8">
 				<div className="text-xs uppercase tracking-[0.18em] text-[var(--primary)]">
@@ -64,11 +67,12 @@ export function RegisterRuntimeForm() {
 					Runtime metadata saved
 				</h2>
 				<p className="text-sm text-[var(--muted)]">
-					Store this secret on your customer runtime — it verifies signed
-					Cheela requests. It is shown once.
+					Set CHEELA_API_KEY in the runtime project, then run cheela deploy.
+					Keep the transport secret on the customer runtime. Both are shown
+					once.
 				</p>
 				<pre className="overflow-x-auto rounded-[16px] border border-[var(--border)] bg-black/50 p-4 font-mono text-xs text-[var(--primary)]">
-					{`runtimeId: ${runtimeId}\nsecret: ${secret}`}
+					{`runtimeId: ${runtimeId}\nCHEELA_API_KEY: ${apiKey}\ntransportSecret: ${secret}`}
 				</pre>
 				<Button
 					onClick={() => {
@@ -157,7 +161,9 @@ export function RegisterRuntimeForm() {
 				</label>
 
 				<label className="block space-y-2 text-sm">
-					<span className="text-[var(--muted)]">HTTPS endpoint (free tier)</span>
+					<span className="text-[var(--muted)]">
+						HTTPS endpoint (free tier)
+					</span>
 					<input
 						name="endpoint"
 						type="url"

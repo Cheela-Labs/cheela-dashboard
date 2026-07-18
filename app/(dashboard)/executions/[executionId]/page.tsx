@@ -130,7 +130,7 @@ export default async function ExecutionDetailPage({
 										{execution.status === "completed"
 											? "Assistant message returned to application"
 											: execution.status === "failed"
-												? execution.error ?? "Execution failed"
+												? (execution.error ?? "Execution failed")
 												: "Agent loop still running"}
 									</div>
 								</div>

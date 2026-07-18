@@ -62,7 +62,7 @@ export default async function OverviewPage() {
 				<PageHeader
 					eyebrow="Overview"
 					title="Control plane"
-					description={`Live data from ${getApiUrl()}. Cheela orchestrates — your infrastructure executes.`}
+					// description={`Live data from ${getApiUrl()}. Cheela orchestrates — your infrastructure executes.`}
 					actions={
 						<>
 							<Button variant="secondary" href="/analytics">

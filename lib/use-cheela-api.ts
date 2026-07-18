@@ -22,7 +22,9 @@ export function useCheelaApi() {
 			const body = (await response.json().catch(() => null)) as {
 				error?: { message?: string };
 			} | null;
-			throw new Error(body?.error?.message ?? `Request failed (${response.status})`);
+			throw new Error(
+				body?.error?.message ?? `Request failed (${response.status})`,
+			);
 		}
 
 		return (await response.json()) as T;

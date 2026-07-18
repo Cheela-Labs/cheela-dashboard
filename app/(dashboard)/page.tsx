@@ -194,7 +194,7 @@ export default async function OverviewPage() {
 							<div className="mt-4 space-y-2 break-all">
 								<div>API {getApiUrl()}</div>
 								<div>Auth Clerk JWT → server</div>
-								<div>Billing Razorpay Pro upgrades</div>
+								<div>Billing Pro $49/mo (USD · Razorpay INR checkout)</div>
 							</div>
 						</div>
 					</div>

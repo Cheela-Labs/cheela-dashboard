@@ -55,6 +55,15 @@ export default async function RuntimeDetailPage({
 						<h2 className="text-lg font-medium text-white">Configuration</h2>
 						<dl className="space-y-4 text-sm">
 							<div className="flex justify-between gap-4 border-b border-[var(--border)] pb-3">
+								<dt className="text-[var(--muted)]">Connection</dt>
+								<dd className="text-white">
+									{runtime.connection?.status ?? runtime.status}
+									{runtime.connection?.transport
+										? ` · ${runtime.connection.transport}`
+										: ""}
+								</dd>
+							</div>
+							<div className="flex justify-between gap-4 border-b border-[var(--border)] pb-3">
 								<dt className="text-[var(--muted)]">Deployment</dt>
 								<dd className="text-white">
 									{runtime.deployment
@@ -75,9 +84,10 @@ export default async function RuntimeDetailPage({
 							<div className="flex justify-between gap-4 border-b border-[var(--border)] pb-3">
 								<dt className="text-[var(--muted)]">Transport</dt>
 								<dd className="text-white">
-									{runtime.tier === "pro"
-										? "Persistent session"
-										: "Signed HTTPS"}
+									{runtime.connection?.transport ??
+										(runtime.tier === "pro"
+											? "Persistent session"
+											: "Signed HTTPS")}
 								</dd>
 							</div>
 							<div className="flex justify-between gap-4">

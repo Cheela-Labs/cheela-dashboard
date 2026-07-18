@@ -13,6 +13,10 @@ type RuntimeCardData = {
 	modelName: string;
 	status: "healthy" | "degraded" | "offline";
 	updatedAt: string;
+	connection?: {
+		status: "online" | "offline";
+		transport?: string;
+	};
 	deployment?: {
 		version?: number;
 		status: "active";
@@ -61,7 +65,10 @@ export function RuntimeCard({ runtime }: { runtime: RuntimeCardData }) {
 				<div className="flex items-center justify-between text-xs text-[var(--muted)]">
 					<span className="inline-flex items-center gap-1.5">
 						<Radio className="size-3.5 text-[var(--primary)]" />
-						{runtime.tier} transport
+						{runtime.connection?.status ?? runtime.status}
+						{runtime.connection?.transport
+							? ` · ${runtime.connection.transport}`
+							: ` · ${runtime.tier} transport`}
 					</span>
 					<span>{formatRelativeTime(runtime.updatedAt)}</span>
 				</div>

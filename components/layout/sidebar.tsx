@@ -4,7 +4,10 @@ import {
 	Activity,
 	BarChart3,
 	Boxes,
+	ChevronDown,
+	FolderKanban,
 	Menu,
+	Plus,
 	Settings,
 	Sparkles,
 	Waypoints,
@@ -13,6 +16,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useProjects } from "@/lib/projects";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -58,6 +62,96 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 				);
 			})}
 		</nav>
+	);
+}
+
+function WorkspaceSwitcher({ onNavigate }: { onNavigate?: () => void }) {
+	const { projects, selectedProject, selectProject, createProject } =
+		useProjects();
+	const [open, setOpen] = useState(false);
+	const pathname = usePathname();
+	const onWorkspacePage = pathname.startsWith("/workspace");
+
+	return (
+		<div className="mb-6">
+			<button
+				type="button"
+				onClick={() => setOpen((value) => !value)}
+				className={cn(
+					"flex w-full items-center justify-between rounded-[20px] border bg-white/[0.02] p-4 text-left transition",
+					onWorkspacePage || open
+						? "border-[rgba(212,160,23,0.28)]"
+						: "border-[var(--border)] hover:border-[rgba(212,160,23,0.2)]",
+				)}
+			>
+				<div>
+					<div className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
+						Workspace
+					</div>
+					<div className="mt-2 text-sm font-medium text-white">
+						{selectedProject.name}
+					</div>
+					<div className="mt-1 text-xs text-[var(--muted)]">
+						{projects.length} project{projects.length === 1 ? "" : "s"}
+					</div>
+				</div>
+				<ChevronDown
+					className={cn(
+						"size-4 text-[var(--muted)] transition",
+						open && "rotate-180",
+					)}
+				/>
+			</button>
+
+			{open ? (
+				<div className="mt-2 space-y-1 rounded-[20px] border border-[var(--border)] bg-black/40 p-2">
+					{projects.map((project) => (
+						<button
+							key={project.id}
+							type="button"
+							onClick={() => {
+								selectProject(project.id);
+								setOpen(false);
+								onNavigate?.();
+							}}
+							className={cn(
+								"flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm transition",
+								project.id === selectedProject.id
+									? "bg-[rgba(212,160,23,0.08)] text-white"
+									: "text-[var(--muted)] hover:bg-white/[0.03] hover:text-white",
+							)}
+						>
+							<FolderKanban className="size-3.5 shrink-0" />
+							<span className="truncate">{project.name}</span>
+						</button>
+					))}
+					<button
+						type="button"
+						onClick={() => {
+							const name = window.prompt("Project name");
+							if (!name?.trim()) return;
+							createProject(name);
+							setOpen(false);
+							onNavigate?.();
+						}}
+						className="flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm text-[var(--primary)] transition hover:bg-white/[0.03]"
+					>
+						<Plus className="size-3.5" />
+						Create New Project
+					</button>
+					<Link
+						href="/workspace"
+						onClick={() => {
+							setOpen(false);
+							onNavigate?.();
+						}}
+						className="flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-sm text-[var(--muted)] transition hover:bg-white/[0.03] hover:text-white"
+					>
+						Manage workspace
+					</Link>
+				</div>
+			) : null}
+		</div>
 	);
 }
 
@@ -114,18 +208,7 @@ export function Sidebar() {
 					</button>
 				</div>
 
-				<div className="mb-6 rounded-[20px] border border-[var(--border)] bg-white/[0.02] p-4">
-					<div className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
-						Workspace
-					</div>
-					<div className="mt-2 text-sm font-medium text-white">
-						Acme Commerce
-					</div>
-					<div className="mt-1 text-xs text-[var(--muted)]">
-						Free → Pro ready
-					</div>
-				</div>
-
+				<WorkspaceSwitcher onNavigate={() => setOpen(false)} />
 				<NavLinks onNavigate={() => setOpen(false)} />
 
 				<div className="mt-auto rounded-[20px] border border-[var(--border)] bg-[radial-gradient(circle_at_top,_rgba(212,160,23,0.12),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent)] p-4">

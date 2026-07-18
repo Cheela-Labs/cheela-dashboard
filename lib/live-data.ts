@@ -78,7 +78,11 @@ export async function fetchPlans() {
 		plans: Array<{
 			id: string;
 			name: string;
-			priceInr: number;
+			priceUsd: number | null;
+			priceLabel?: string;
+			contactUrl?: string;
+			currency?: string;
+			interval?: string;
 			features: string[];
 			razorpayEnabled?: boolean;
 		}>;

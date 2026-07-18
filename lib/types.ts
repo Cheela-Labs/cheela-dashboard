@@ -11,6 +11,10 @@ export type RuntimeSummary = {
 	status?: "healthy" | "degraded" | "offline";
 	updatedAt: string;
 	createdAt?: string;
+	connection?: {
+		status: "online" | "offline";
+		transport?: string;
+	};
 	deployment?: {
 		version?: number;
 		status: "active";
@@ -104,6 +108,7 @@ export function normalizeRuntime(runtime: RuntimeSummary): RuntimeSummary & {
 		providerName,
 		modelName,
 		status: runtime.status ?? "healthy",
+		connection: runtime.connection,
 		deployment: runtime.deployment,
 	};
 }

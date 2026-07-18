@@ -104,7 +104,7 @@ export function UpgradeButton({
 	return (
 		<div className="space-y-3">
 			<Button onClick={handleUpgrade} disabled={loading}>
-				{loading ? "Opening checkout…" : "Upgrade to Pro — ₹999"}
+				{loading ? "Opening checkout…" : "Upgrade to Pro — $49"}
 			</Button>
 			{message ? (
 				<p className="text-sm text-[var(--muted)]">{message}</p>

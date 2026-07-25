@@ -9,10 +9,10 @@ import {
 	Menu,
 	Plus,
 	Settings,
-	Sparkles,
 	Waypoints,
 	X,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -43,18 +43,18 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 						href={item.href}
 						onClick={onNavigate}
 						className={cn(
-							"group flex items-center gap-3 rounded-2xl px-3.5 py-3 text-sm transition duration-300",
+							"group flex items-center gap-3 rounded-md px-3.5 py-3 text-sm transition-colors duration-base",
 							active
-								? "border border-[rgba(212,160,23,0.28)] bg-[rgba(212,160,23,0.08)] text-white"
-								: "border border-transparent text-[var(--muted)] hover:border-[var(--border)] hover:bg-white/[0.03] hover:text-white",
+								? "border border-accent/30 bg-accent/15 text-console-fg"
+								: "border border-transparent text-console-fg-muted hover:bg-white/[0.03] hover:text-console-fg",
 						)}
 					>
 						<Icon
 							className={cn(
-								"size-4 transition",
+								"size-4",
 								active
-									? "text-[var(--primary)]"
-									: "text-[var(--muted)] group-hover:text-white",
+									? "text-accent"
+									: "text-console-fg-muted group-hover:text-console-fg",
 							)}
 						/>
 						{item.label}
@@ -78,33 +78,33 @@ function WorkspaceSwitcher({ onNavigate }: { onNavigate?: () => void }) {
 				type="button"
 				onClick={() => setOpen((value) => !value)}
 				className={cn(
-					"flex w-full items-center justify-between rounded-[20px] border bg-white/[0.02] p-4 text-left transition",
+					"flex w-full items-center justify-between rounded-md border bg-white/[0.02] p-4 text-left transition-colors",
 					onWorkspacePage || open
-						? "border-[rgba(212,160,23,0.28)]"
-						: "border-[var(--border)] hover:border-[rgba(212,160,23,0.2)]",
+						? "border-accent/30"
+						: "border-console-border hover:border-accent/20",
 				)}
 			>
 				<div>
-					<div className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
-						Workspace
+					<div className="text-2xs tracking-wide text-console-fg-muted">
+						WORKSPACE
 					</div>
-					<div className="mt-2 text-sm font-medium text-white">
+					<div className="mt-2 text-sm font-medium text-console-fg">
 						{selectedProject.name}
 					</div>
-					<div className="mt-1 text-xs text-[var(--muted)]">
+					<div className="mt-1 text-2xs text-console-fg-muted">
 						{projects.length} project{projects.length === 1 ? "" : "s"}
 					</div>
 				</div>
 				<ChevronDown
 					className={cn(
-						"size-4 text-[var(--muted)] transition",
+						"size-4 text-console-fg-muted transition-transform",
 						open && "rotate-180",
 					)}
 				/>
 			</button>
 
 			{open ? (
-				<div className="mt-2 space-y-1 rounded-[20px] border border-[var(--border)] bg-black/40 p-2">
+				<div className="mt-2 space-y-1 rounded-md border border-console-border bg-ink-0 p-2">
 					{projects.map((project) => (
 						<button
 							key={project.id}
@@ -115,10 +115,10 @@ function WorkspaceSwitcher({ onNavigate }: { onNavigate?: () => void }) {
 								onNavigate?.();
 							}}
 							className={cn(
-								"flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm transition",
+								"flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-left text-sm transition-colors",
 								project.id === selectedProject.id
-									? "bg-[rgba(212,160,23,0.08)] text-white"
-									: "text-[var(--muted)] hover:bg-white/[0.03] hover:text-white",
+									? "bg-accent/15 text-console-fg"
+									: "text-console-fg-muted hover:bg-white/[0.03] hover:text-console-fg",
 							)}
 						>
 							<FolderKanban className="size-3.5 shrink-0" />
@@ -134,7 +134,7 @@ function WorkspaceSwitcher({ onNavigate }: { onNavigate?: () => void }) {
 							setOpen(false);
 							onNavigate?.();
 						}}
-						className="flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-left text-sm text-[var(--primary)] transition hover:bg-white/[0.03]"
+						className="flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-left text-sm text-accent transition-colors hover:bg-white/[0.03]"
 					>
 						<Plus className="size-3.5" />
 						Create New Project
@@ -145,7 +145,7 @@ function WorkspaceSwitcher({ onNavigate }: { onNavigate?: () => void }) {
 							setOpen(false);
 							onNavigate?.();
 						}}
-						className="flex w-full items-center gap-2 rounded-2xl px-3 py-2.5 text-sm text-[var(--muted)] transition hover:bg-white/[0.03] hover:text-white"
+						className="flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-sm text-console-fg-muted transition-colors hover:bg-white/[0.03] hover:text-console-fg"
 					>
 						Manage workspace
 					</Link>
@@ -162,7 +162,7 @@ export function Sidebar() {
 		<>
 			<button
 				type="button"
-				className="fixed left-4 top-4 z-40 inline-flex items-center justify-center rounded-full border border-[var(--border)] bg-black/70 p-3 text-white backdrop-blur-xl lg:hidden"
+				className="fixed left-4 top-4 z-40 inline-flex items-center justify-center rounded-pill border border-console-border bg-black/70 p-3 text-console-fg backdrop-blur-xl lg:hidden"
 				aria-label="Open navigation"
 				onClick={() => setOpen(true)}
 			>
@@ -180,27 +180,26 @@ export function Sidebar() {
 
 			<aside
 				className={cn(
-					"fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-[var(--border)] bg-[#0b0b0b]/95 p-5 backdrop-blur-2xl transition-transform duration-300 lg:static lg:translate-x-0",
+					"fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col border-r border-console-border bg-console-bg/95 p-5 backdrop-blur-2xl transition-transform duration-base lg:static lg:translate-x-0",
 					open ? "translate-x-0" : "-translate-x-full",
 				)}
 			>
 				<div className="mb-8 flex items-center justify-between">
-					<Link href="/" className="flex items-center gap-3">
-						<div className="flex size-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface)] text-[var(--primary)]">
-							<Sparkles className="size-4" />
-						</div>
-						<div>
-							<div className="text-sm font-medium uppercase tracking-[0.16em] text-white">
-								Cheela
-							</div>
-							<div className="text-xs text-[var(--muted)]">
-								Cloud control plane
-							</div>
-						</div>
+					<Link href="/" className="flex items-center gap-2.5">
+						<Image
+							src="/logo-mark.svg"
+							alt=""
+							width={22}
+							height={22}
+							className="size-[22px]"
+						/>
+						<span className="font-display text-sm font-semibold text-console-fg">
+							Cheela
+						</span>
 					</Link>
 					<button
 						type="button"
-						className="rounded-full border border-[var(--border)] p-2 text-white lg:hidden"
+						className="rounded-pill border border-console-border p-2 text-console-fg lg:hidden"
 						aria-label="Close navigation"
 						onClick={() => setOpen(false)}
 					>
@@ -211,11 +210,9 @@ export function Sidebar() {
 				<WorkspaceSwitcher onNavigate={() => setOpen(false)} />
 				<NavLinks onNavigate={() => setOpen(false)} />
 
-				<div className="mt-auto rounded-[20px] border border-[var(--border)] bg-[radial-gradient(circle_at_top,_rgba(212,160,23,0.12),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent)] p-4">
-					<div className="text-xs uppercase tracking-[0.18em] text-[var(--primary)]">
-						Principle
-					</div>
-					<p className="mt-3 text-sm leading-6 text-[var(--muted)]">
+				<div className="mt-auto rounded-md border border-console-border bg-white/[0.02] p-4">
+					<div className="text-2xs tracking-wide text-accent">PRINCIPLE</div>
+					<p className="mt-3 text-sm leading-relaxed text-console-fg-muted">
 						Cheela orchestrates. Your infrastructure executes.
 					</p>
 				</div>

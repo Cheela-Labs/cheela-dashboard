@@ -9,8 +9,7 @@ export default function DashboardLayout({
 }) {
 	return (
 		<ProjectsProvider>
-			<div className="relative min-h-screen lg:grid lg:grid-cols-[280px_1fr]">
-				<div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,_rgba(212,160,23,0.12),transparent_28%),radial-gradient(circle_at_top_right,_rgba(212,160,23,0.08),transparent_24%)]" />
+			<div className="relative min-h-screen bg-console-bg lg:grid lg:grid-cols-[280px_1fr]">
 				<Sidebar />
 				<div className="min-w-0">
 					<Topbar />

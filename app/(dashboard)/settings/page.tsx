@@ -1,4 +1,5 @@
 import { UpgradeButton } from "@/components/billing/upgrade-button";
+import { UpgradePlanDialog } from "@/components/dashboard/dialogs/upgrade-plan-dialog";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -73,51 +74,53 @@ export default async function SettingsPage() {
 			</FadeIn>
 
 			{error ? (
-				<Card className="border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.05)] p-5 text-sm text-red-200">
+				<Card className="border-danger/25 bg-danger/5 p-5 text-sm text-danger">
 					{error}
 				</Card>
 			) : null}
 
 			<FadeIn delay={0.05}>
 				<Card className="space-y-5 p-6 sm:p-8">
-					<h2 className="text-lg font-medium text-white">Usage Limits</h2>
-					<p className="text-sm leading-6 text-[var(--muted)]">
+					<h2 className="text-lg font-medium text-console-fg">Usage Limits</h2>
+					<p className="text-sm leading-6 text-console-fg-muted">
 						Live usage for the authenticated owner. API{" "}
-						<code className="text-[var(--primary)]">{getApiUrl()}</code>
+						<code className="text-accent">{getApiUrl()}</code>
 					</p>
 					{usage ? (
 						<dl className="space-y-3 text-sm">
 							<div className="flex justify-between gap-4">
-								<dt className="text-[var(--muted)]">Tier</dt>
-								<dd className="uppercase tracking-[0.12em] text-white">
+								<dt className="text-console-fg-muted">Tier</dt>
+								<dd className="uppercase tracking-wide text-console-fg">
 									{usage.tier}
 								</dd>
 							</div>
 							<div className="flex justify-between gap-4">
-								<dt className="text-[var(--muted)]">Executions today</dt>
-								<dd className="text-white">{formatNumber(usage.executions)}</dd>
+								<dt className="text-console-fg-muted">Executions today</dt>
+								<dd className="text-console-fg">
+									{formatNumber(usage.executions)}
+								</dd>
 							</div>
 							<div className="flex justify-between gap-4">
-								<dt className="text-[var(--muted)]">Capability calls</dt>
-								<dd className="text-white">
+								<dt className="text-console-fg-muted">Capability calls</dt>
+								<dd className="text-console-fg">
 									{formatNumber(usage.capabilityCalls)}
 								</dd>
 							</div>
 							<div className="flex justify-between gap-4">
-								<dt className="text-[var(--muted)]">Input tokens</dt>
-								<dd className="text-white">
+								<dt className="text-console-fg-muted">Input tokens</dt>
+								<dd className="text-console-fg">
 									{formatNumber(usage.inputTokens)}
 								</dd>
 							</div>
 							<div className="flex justify-between gap-4">
-								<dt className="text-[var(--muted)]">Output tokens</dt>
-								<dd className="text-white">
+								<dt className="text-console-fg-muted">Output tokens</dt>
+								<dd className="text-console-fg">
 									{formatNumber(usage.outputTokens)}
 								</dd>
 							</div>
 						</dl>
 					) : (
-						<p className="text-sm text-[var(--muted)]">
+						<p className="text-sm text-console-fg-muted">
 							Usage is unavailable until the API is reachable.
 						</p>
 					)}
@@ -126,8 +129,8 @@ export default async function SettingsPage() {
 
 			<FadeIn delay={0.1}>
 				<Card className="space-y-5 p-6 sm:p-8">
-					<h2 className="text-lg font-medium text-white">Billing</h2>
-					<p className="text-sm leading-6 text-[var(--muted)]">
+					<h2 className="text-lg font-medium text-console-fg">Billing</h2>
+					<p className="text-sm leading-6 text-console-fg-muted">
 						Prices are shown in USD. Pro checkout is charged in INR via Razorpay
 						using the configured USD→INR conversion rate.
 					</p>
@@ -135,22 +138,29 @@ export default async function SettingsPage() {
 						{displayPlans.map((tier) => (
 							<div
 								key={tier.id}
-								className="flex flex-col rounded-2xl border border-[var(--border)] bg-white/[0.02] px-4 py-4"
+								className="flex flex-col rounded-lg border border-console-border bg-white/[0.02] px-4 py-4"
 							>
 								<div className="flex items-center justify-between gap-3">
-									<div className="text-sm font-medium text-white">
+									<div className="text-sm font-medium text-console-fg">
 										{tier.name}
 									</div>
-									<div className="text-sm text-[var(--primary)]">
+									<div className="text-sm text-accent">
 										{formatPlanPrice(tier)}
 									</div>
 								</div>
-								<div className="mt-2 grow text-sm text-[var(--muted)]">
+								<div className="mt-2 grow text-sm text-console-fg-muted">
 									{tier.features.join(" · ")}
 								</div>
 								<div className="mt-4">
 									{tier.id === "pro" ? (
-										<UpgradeButton currentTier={usage?.tier} />
+										usage?.tier === "pro" || usage?.tier === "enterprise" ? (
+											<UpgradeButton currentTier={usage?.tier} />
+										) : (
+											<UpgradePlanDialog
+												currentTier={usage?.tier}
+												trigger={<Button>Upgrade to Pro</Button>}
+											/>
+										)
 									) : null}
 									{tier.id === "enterprise" &&
 									"contactUrl" in tier &&

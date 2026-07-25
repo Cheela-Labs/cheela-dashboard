@@ -30,7 +30,7 @@ export default async function ExecutionsPage() {
 			</FadeIn>
 
 			{error ? (
-				<Card className="border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.05)] p-5 text-sm text-red-200">
+				<Card className="border-danger/25 bg-danger/5 p-5 text-sm text-danger">
 					{error}
 				</Card>
 			) : null}

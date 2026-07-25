@@ -35,7 +35,7 @@ export default async function RuntimeDetailPage({
 									runtime.status === "healthy"
 										? "success"
 										: runtime.status === "degraded"
-											? "primary"
+											? "accent"
 											: "danger"
 								}
 							>
@@ -52,38 +52,40 @@ export default async function RuntimeDetailPage({
 			<div className="grid gap-6 lg:grid-cols-2">
 				<FadeIn delay={0.05}>
 					<Card className="space-y-5 p-6">
-						<h2 className="text-lg font-medium text-white">Configuration</h2>
+						<h2 className="text-lg font-medium text-console-fg">
+							Configuration
+						</h2>
 						<dl className="space-y-4 text-sm">
-							<div className="flex justify-between gap-4 border-b border-[var(--border)] pb-3">
-								<dt className="text-[var(--muted)]">Connection</dt>
-								<dd className="text-white">
+							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
+								<dt className="text-console-fg-muted">Connection</dt>
+								<dd className="text-console-fg">
 									{runtime.connection?.status ?? runtime.status}
 									{runtime.connection?.transport
 										? ` · ${runtime.connection.transport}`
 										: ""}
 								</dd>
 							</div>
-							<div className="flex justify-between gap-4 border-b border-[var(--border)] pb-3">
-								<dt className="text-[var(--muted)]">Deployment</dt>
-								<dd className="text-white">
+							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
+								<dt className="text-console-fg-muted">Deployment</dt>
+								<dd className="text-console-fg">
 									{runtime.deployment
 										? `v${runtime.deployment.version} · ${runtime.deployment.status}`
 										: "Not deployed"}
 								</dd>
 							</div>
-							<div className="flex justify-between gap-4 border-b border-[var(--border)] pb-3">
-								<dt className="text-[var(--muted)]">Tier</dt>
-								<dd className="text-white">{runtime.tier}</dd>
+							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
+								<dt className="text-console-fg-muted">Tier</dt>
+								<dd className="text-console-fg">{runtime.tier}</dd>
 							</div>
-							<div className="flex justify-between gap-4 border-b border-[var(--border)] pb-3">
-								<dt className="text-[var(--muted)]">Provider</dt>
-								<dd className="text-white">
+							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
+								<dt className="text-console-fg-muted">Provider</dt>
+								<dd className="text-console-fg">
 									{runtime.providerName} · {runtime.modelName}
 								</dd>
 							</div>
-							<div className="flex justify-between gap-4 border-b border-[var(--border)] pb-3">
-								<dt className="text-[var(--muted)]">Transport</dt>
-								<dd className="text-white">
+							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
+								<dt className="text-console-fg-muted">Transport</dt>
+								<dd className="text-console-fg">
 									{runtime.connection?.transport ??
 										(runtime.tier === "pro"
 											? "Persistent session"
@@ -91,14 +93,14 @@ export default async function RuntimeDetailPage({
 								</dd>
 							</div>
 							<div className="flex justify-between gap-4">
-								<dt className="text-[var(--muted)]">Updated</dt>
-								<dd className="text-white">
+								<dt className="text-console-fg-muted">Updated</dt>
+								<dd className="text-console-fg">
 									{formatRelativeTime(runtime.updatedAt)}
 								</dd>
 							</div>
 						</dl>
 						{runtime.endpoint ? (
-							<div className="rounded-[16px] border border-[var(--border)] bg-black/40 p-4 font-mono text-xs text-[var(--muted)]">
+							<div className="rounded-[16px] border border-console-border bg-black/40 p-4 font-mono text-xs text-console-fg-muted">
 								{runtime.endpoint}
 							</div>
 						) : null}
@@ -107,17 +109,17 @@ export default async function RuntimeDetailPage({
 
 				<FadeIn delay={0.1}>
 					<Card className="space-y-5 p-6">
-						<h2 className="text-lg font-medium text-white">
+						<h2 className="text-lg font-medium text-console-fg">
 							Capability manifest
 						</h2>
-						<p className="text-sm leading-6 text-[var(--muted)]">
+						<p className="text-sm leading-6 text-console-fg-muted">
 							Names only. Handlers execute inside the customer runtime.
 						</p>
 						<div className="flex flex-wrap gap-2">
 							{runtime.capabilityNames.map((capability) => (
 								<span
 									key={capability}
-									className="rounded-full border border-[var(--border)] bg-white/[0.02] px-3 py-1.5 font-mono text-xs text-white"
+									className="rounded-full border border-console-border bg-white/[0.02] px-3 py-1.5 font-mono text-xs text-console-fg"
 								>
 									{capability}
 								</span>

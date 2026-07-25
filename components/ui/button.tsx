@@ -11,17 +11,16 @@ type Variant = "primary" | "secondary" | "outline" | "ghost" | "link";
 type Size = "sm" | "md" | "lg";
 
 const baseClassName =
-	"inline-flex items-center justify-center gap-2 rounded-full font-medium tracking-[-0.01em] transition duration-300 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] disabled:pointer-events-none disabled:opacity-50";
+	"inline-flex items-center justify-center gap-2 rounded-md font-body font-medium transition-transform duration-fast ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-console-bg disabled:pointer-events-none disabled:opacity-50";
 
 const variantClasses: Record<Variant, string> = {
-	primary:
-		"bg-[var(--primary)] text-black hover:bg-[var(--primary-hover)] shadow-[0_0_0_1px_rgba(0,0,0,0.12)_inset]",
+	primary: "bg-accent text-ink-0",
 	secondary:
-		"border border-[var(--border)] bg-[var(--surface)] text-white hover:border-[rgba(228,179,40,0.32)] hover:bg-white/5",
+		"border border-console-border bg-console-surface text-console-fg hover:bg-white/5",
 	outline:
-		"border border-[var(--border)] bg-transparent text-white hover:border-[rgba(228,179,40,0.32)] hover:bg-white/5",
-	ghost: "bg-transparent text-white hover:bg-white/5",
-	link: "bg-transparent px-0 py-0 text-[var(--primary)] underline-offset-4 hover:underline",
+		"border border-console-border bg-transparent text-console-fg hover:bg-white/5",
+	ghost: "bg-transparent text-console-fg hover:bg-white/5",
+	link: "bg-transparent px-0 py-0 text-accent underline-offset-4 hover:underline",
 };
 
 const sizeClasses: Record<Size, string> = {

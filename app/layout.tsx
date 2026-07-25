@@ -1,15 +1,18 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const geistSans = Geist({
-	variable: "--font-geist-sans",
-	subsets: ["latin"],
+const ranade = localFont({
+	src: "./fonts/Ranade-Variable.ttf",
+	variable: "--font-ranade",
+	weight: "100 900",
+	display: "swap",
 });
 
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+	variable: "--font-jetbrains-mono",
 	subsets: ["latin"],
 });
 
@@ -31,18 +34,19 @@ export default function RootLayout({
 		<ClerkProvider
 			appearance={{
 				variables: {
-					colorPrimary: "#d4a017",
-					colorBackground: "#111111",
-					colorText: "#f5f5f5",
-					colorInputBackground: "#090909",
-					colorInputText: "#f5f5f5",
-					borderRadius: "1rem",
+					colorPrimary: "#ffa600",
+					colorBackground: "#0e0e10",
+					colorText: "#f5f4f0",
+					colorInputBackground: "#050505",
+					colorInputText: "#f5f4f0",
+					borderRadius: "0.75rem",
+					fontFamily: "var(--font-ranade)",
 				},
 			}}
 		>
 			<html lang="en" suppressHydrationWarning>
 				<body
-					className={`${geistSans.variable} ${geistMono.variable} bg-[var(--background)] text-[var(--foreground)] antialiased`}
+					className={`${ranade.variable} ${jetbrainsMono.variable} bg-console-bg text-console-fg antialiased`}
 				>
 					{children}
 				</body>

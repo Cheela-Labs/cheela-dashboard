@@ -54,18 +54,18 @@ export default function WorkspacePage() {
 									interactive
 									className={cn(
 										"space-y-4 p-6",
-										selected && "border-[rgba(212,160,23,0.35)]",
+										selected && "border-accent/35",
 									)}
 								>
 									<div className="flex items-start gap-3">
-										<div className="flex size-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-black/40 text-[var(--primary)]">
+										<div className="flex size-11 items-center justify-center rounded-lg border border-console-border bg-black/40 text-accent">
 											<FolderKanban className="size-5" />
 										</div>
 										<div>
-											<div className="text-lg font-medium text-white">
+											<div className="text-lg font-medium text-console-fg">
 												{project.name}
 											</div>
-											<div className="mt-1 text-xs text-[var(--muted)]">
+											<div className="mt-1 text-xs text-console-fg-muted">
 												{runtimeCount} linked runtime
 												{runtimeCount === 1 ? "" : "s"}
 												{selected ? " · current" : ""}

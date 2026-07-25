@@ -4,10 +4,13 @@ import {
 	Boxes,
 	Clock3,
 	Coins,
+	Download,
 	Plus,
 } from "lucide-react";
+import { ExportDownloadDialog } from "@/components/dashboard/dialogs/export-download-dialog";
+import { RegisterRuntimeDialog } from "@/components/dashboard/dialogs/register-runtime-dialog";
 import { ExecutionsTable } from "@/components/dashboard/executions-table";
-import { RuntimeCard } from "@/components/dashboard/runtime-card";
+import { RuntimePreviewRow } from "@/components/dashboard/runtime-preview-row";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -68,20 +71,24 @@ export default async function OverviewPage() {
 							<Button variant="secondary" href="/analytics">
 								View analytics
 							</Button>
-							<Button href="/runtimes/new">
-								<Plus className="size-4" />
-								Register runtime
-							</Button>
+							<RegisterRuntimeDialog
+								trigger={
+									<Button>
+										<Plus className="size-4" />
+										Register runtime
+									</Button>
+								}
+							/>
 						</>
 					}
 				/>
 			</FadeIn>
 
 			{apiError ? (
-				<Card className="border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.05)] p-5 text-sm text-red-200">
+				<Card className="border-danger/25 bg-danger/5 p-5 text-sm text-danger">
 					Could not reach the Cheela API at {getApiUrl()}. Check{" "}
-					<code className="text-[var(--primary)]">NEXT_PUBLIC_API_URL</code>,
-					CORS, and that the server is running with the same Clerk secret.
+					<code className="text-accent">NEXT_PUBLIC_API_URL</code>, CORS, and
+					that the server is running with the same Clerk secret.
 				</Card>
 			) : null}
 
@@ -119,16 +126,29 @@ export default async function OverviewPage() {
 					<section className="space-y-4">
 						<div className="flex items-end justify-between gap-4">
 							<div>
-								<h2 className="text-xl font-medium tracking-[-0.03em] text-white">
+								<h2 className="font-display text-xl font-semibold tracking-tight text-console-fg">
 									Recent executions
 								</h2>
-								<p className="mt-1 text-sm text-[var(--muted)]">
+								<p className="mt-1 text-sm text-console-fg-muted">
 									Latest agent loops from the execution engine.
 								</p>
 							</div>
-							<Button variant="ghost" size="sm" href="/executions">
-								View all
-							</Button>
+							<div className="flex gap-2">
+								{executions.length > 0 ? (
+									<ExportDownloadDialog
+										executions={executions}
+										trigger={
+											<Button variant="secondary" size="sm">
+												<Download className="size-3.5" />
+												Download
+											</Button>
+										}
+									/>
+								) : null}
+								<Button variant="ghost" size="sm" href="/executions">
+									View all
+								</Button>
+							</div>
 						</div>
 						{executions.length === 0 ? (
 							<EmptyState
@@ -144,10 +164,10 @@ export default async function OverviewPage() {
 				<FadeIn delay={0.15}>
 					<section className="space-y-4">
 						<div>
-							<h2 className="text-xl font-medium tracking-[-0.03em] text-white">
+							<h2 className="font-display text-xl font-semibold tracking-tight text-console-fg">
 								Runtimes
 							</h2>
-							<p className="mt-1 text-sm text-[var(--muted)]">
+							<p className="mt-1 text-sm text-console-fg-muted">
 								Registered metadata for your workspace.
 							</p>
 						</div>
@@ -164,7 +184,10 @@ export default async function OverviewPage() {
 						) : (
 							<div className="space-y-4">
 								{runtimes.map((runtime) => (
-									<RuntimeCard key={runtime.runtimeId} runtime={runtime} />
+									<RuntimePreviewRow
+										key={runtime.runtimeId}
+										runtime={runtime}
+									/>
 								))}
 							</div>
 						)}
@@ -173,24 +196,23 @@ export default async function OverviewPage() {
 			</div>
 
 			<FadeIn delay={0.2}>
-				<Card className="relative overflow-hidden p-0">
-					<div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,160,23,0.12),_transparent_46%),linear-gradient(180deg,rgba(255,255,255,0.02),transparent)]" />
-					<div className="relative grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+				<Card className="p-0">
+					<div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
 						<div className="space-y-4">
-							<div className="inline-flex items-center gap-2 rounded-full border border-[rgba(212,160,23,0.28)] bg-[rgba(212,160,23,0.06)] px-3 py-1 text-xs uppercase tracking-[0.18em] text-[var(--primary)]">
+							<div className="inline-flex items-center gap-2 rounded-pill border border-accent/30 bg-accent/10 px-3 py-1 font-mono text-2xs tracking-wide text-accent">
 								<AlertTriangle className="size-3.5" />
 								Live
 							</div>
-							<h2 className="text-2xl font-medium tracking-[-0.04em] text-white sm:text-3xl">
+							<h2 className="font-display text-2xl font-semibold tracking-tight text-console-fg sm:text-3xl">
 								Connected to Cheela Cloud
 							</h2>
-							<p className="max-w-xl text-[15px] leading-7 text-[var(--muted)]">
+							<p className="max-w-xl text-md leading-relaxed text-console-fg-muted">
 								This dashboard authenticates with Clerk and reads live registry,
 								execution, analytics, and billing data from your deployed API.
 							</p>
 						</div>
-						<div className="rounded-[24px] border border-[var(--border)] bg-black/40 p-5 font-mono text-sm text-[var(--muted)]">
-							<div className="text-[var(--primary)]">Connection</div>
+						<div className="rounded-lg border border-console-border bg-black/40 p-5 font-mono text-sm text-console-fg-muted">
+							<div className="text-accent">Connection</div>
 							<div className="mt-4 space-y-2 break-all">
 								<div>API {getApiUrl()}</div>
 								<div>Auth Clerk JWT → server</div>

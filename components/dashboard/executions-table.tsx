@@ -6,7 +6,7 @@ import { formatDuration, formatRelativeTime } from "@/lib/utils";
 function statusTone(status: ExecutionSummary["status"]) {
 	if (status === "completed") return "success" as const;
 	if (status === "failed") return "danger" as const;
-	return "primary" as const;
+	return "accent" as const;
 }
 
 export function ExecutionsTable({
@@ -15,15 +15,15 @@ export function ExecutionsTable({
 	executions: ExecutionSummary[];
 }) {
 	return (
-		<div className="overflow-hidden rounded-[24px] border border-[var(--border)]">
-			<div className="grid grid-cols-[1.2fr_1fr_0.7fr_0.7fr_0.7fr] gap-4 border-b border-[var(--border)] bg-white/[0.02] px-5 py-3 text-xs uppercase tracking-[0.16em] text-[var(--muted)] max-md:hidden">
+		<div className="overflow-hidden rounded-lg border border-console-border">
+			<div className="grid grid-cols-[1.2fr_1fr_0.7fr_0.7fr_0.7fr] gap-4 border-b border-console-border bg-white/[0.02] px-5 py-3 text-xs uppercase tracking-wide text-console-fg-muted max-md:hidden">
 				<span>Execution</span>
 				<span>Runtime</span>
 				<span>Status</span>
 				<span>Duration</span>
 				<span>When</span>
 			</div>
-			<div className="divide-y divide-[var(--border)]">
+			<div className="divide-y divide-console-border">
 				{executions.map((execution) => (
 					<Link
 						key={execution.executionId}
@@ -31,14 +31,14 @@ export function ExecutionsTable({
 						className="grid gap-3 px-5 py-4 transition hover:bg-white/[0.02] md:grid-cols-[1.2fr_1fr_0.7fr_0.7fr_0.7fr] md:items-center md:gap-4"
 					>
 						<div className="min-w-0">
-							<div className="truncate font-mono text-sm text-white">
+							<div className="truncate font-mono text-sm text-console-fg">
 								{execution.executionId}
 							</div>
-							<div className="mt-1 truncate text-sm text-[var(--muted)]">
+							<div className="mt-1 truncate text-sm text-console-fg-muted">
 								{execution.preview}
 							</div>
 						</div>
-						<div className="truncate font-mono text-sm text-[var(--muted)]">
+						<div className="truncate font-mono text-sm text-console-fg-muted">
 							{execution.runtimeId}
 						</div>
 						<div>
@@ -46,12 +46,12 @@ export function ExecutionsTable({
 								{execution.status}
 							</Badge>
 						</div>
-						<div className="text-sm text-[var(--muted)]">
+						<div className="text-sm text-console-fg-muted">
 							{execution.durationMs != null
 								? formatDuration(execution.durationMs)
 								: "—"}
 						</div>
-						<div className="text-sm text-[var(--muted)]">
+						<div className="text-sm text-console-fg-muted">
 							{formatRelativeTime(execution.startedAt)}
 						</div>
 					</Link>

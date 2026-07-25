@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react";
+import { RegisterRuntimeDialog } from "@/components/dashboard/dialogs/register-runtime-dialog";
 import { RuntimeCard } from "@/components/dashboard/runtime-card";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Button } from "@/components/ui/button";
@@ -29,16 +30,20 @@ export default async function RuntimesPage() {
 					title="Runtimes"
 					description="Registered runtime metadata only — versions, capability manifests, provider config. Executable capability code never leaves customer infrastructure."
 					actions={
-						<Button href="/runtimes/new">
-							<Plus className="size-4" />
-							Register runtime
-						</Button>
+						<RegisterRuntimeDialog
+							trigger={
+								<Button>
+									<Plus className="size-4" />
+									Register runtime
+								</Button>
+							}
+						/>
 					}
 				/>
 			</FadeIn>
 
 			{error ? (
-				<Card className="border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.05)] p-5 text-sm text-red-200">
+				<Card className="border-danger/25 bg-danger/5 p-5 text-sm text-danger">
 					{error}
 				</Card>
 			) : null}

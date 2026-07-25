@@ -58,7 +58,7 @@ export default async function AnalyticsPage() {
 			</FadeIn>
 
 			{error ? (
-				<Card className="border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.05)] p-5 text-sm text-red-200">
+				<Card className="border-danger/25 bg-danger/5 p-5 text-sm text-danger">
 					{error}
 				</Card>
 			) : null}
@@ -100,15 +100,15 @@ export default async function AnalyticsPage() {
 					<FadeIn delay={0.1}>
 						<Card className="space-y-6 p-6 sm:p-8">
 							<div>
-								<h2 className="text-xl font-medium tracking-[-0.03em] text-white">
+								<h2 className="font-display text-xl font-semibold tracking-tight text-console-fg">
 									Popular capabilities
 								</h2>
-								<p className="mt-1 text-sm text-[var(--muted)]">
+								<p className="mt-1 text-sm text-console-fg-muted">
 									Most invoked tools across registered runtimes.
 								</p>
 							</div>
 							{capabilityEntries.length === 0 ? (
-								<p className="text-sm text-[var(--muted)]">
+								<p className="text-sm text-console-fg-muted">
 									No capability calls yet.
 								</p>
 							) : (
@@ -120,28 +120,28 @@ export default async function AnalyticsPage() {
 					<FadeIn delay={0.15}>
 						<Card className="space-y-6 p-6 sm:p-8">
 							<div>
-								<h2 className="text-xl font-medium tracking-[-0.03em] text-white">
+								<h2 className="font-display text-xl font-semibold tracking-tight text-console-fg">
 									Runtime usage
 								</h2>
-								<p className="mt-1 text-sm text-[var(--muted)]">
+								<p className="mt-1 text-sm text-console-fg-muted">
 									Executions attributed per runtime ID.
 								</p>
 							</div>
 							<div className="space-y-3">
 								{runtimeEntries.length === 0 ? (
-									<p className="text-sm text-[var(--muted)]">
+									<p className="text-sm text-console-fg-muted">
 										No runtime usage yet.
 									</p>
 								) : (
 									runtimeEntries.map(([runtimeId, count]) => (
 										<div
 											key={runtimeId}
-											className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--border)] bg-white/[0.02] px-4 py-3"
+											className="flex items-center justify-between gap-4 rounded-lg border border-console-border bg-white/[0.02] px-4 py-3"
 										>
-											<span className="truncate font-mono text-sm text-white">
+											<span className="truncate font-mono text-sm text-console-fg">
 												{runtimeId}
 											</span>
-											<span className="text-sm text-[var(--muted)]">
+											<span className="text-sm text-console-fg-muted">
 												{formatNumber(count)}
 											</span>
 										</div>
@@ -149,11 +149,11 @@ export default async function AnalyticsPage() {
 								)}
 							</div>
 
-							<div className="flex items-start gap-3 rounded-[20px] border border-[rgba(248,113,113,0.2)] bg-[rgba(248,113,113,0.05)] p-4">
-								<AlertTriangle className="mt-0.5 size-4 text-red-300" />
+							<div className="flex items-start gap-3 rounded-lg border border-danger/20 bg-danger/5 p-4">
+								<AlertTriangle className="mt-0.5 size-4 text-danger" />
 								<div>
-									<div className="text-sm text-white">Error rate</div>
-									<p className="mt-1 text-sm leading-6 text-[var(--muted)]">
+									<div className="text-sm text-console-fg">Error rate</div>
+									<p className="mt-1 text-sm leading-relaxed text-console-fg-muted">
 										{data.errors} failures of {data.requests || 0} requests
 										{data.requests > 0
 											? ` (${((data.errors / data.requests) * 100).toFixed(1)}%).`

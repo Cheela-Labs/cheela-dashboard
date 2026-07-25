@@ -153,20 +153,20 @@ export function Topbar({ title }: { title?: string }) {
 	}
 
 	return (
-		<header className="sticky top-0 z-20 border-b border-[var(--border)] bg-[#090909]/80 backdrop-blur-2xl">
+		<header className="sticky top-0 z-20 border-b border-console-border bg-console-bg/80 backdrop-blur-2xl">
 			<div className="flex items-center justify-between gap-4 px-6 py-4 sm:px-8 lg:pl-8">
 				<div className="pl-12 lg:pl-0">
-					<div className="text-xs uppercase tracking-[0.18em] text-[var(--muted)]">
-						Dashboard
+					<div className="text-2xs tracking-wide text-console-fg-muted">
+						DASHBOARD
 					</div>
-					<div className="mt-1 text-sm font-medium text-white">
+					<div className="mt-1 text-sm font-medium text-console-fg">
 						{title ?? selectedProject.name}
 					</div>
 				</div>
 
 				<div className="flex items-center gap-3">
 					<div className="relative hidden md:block">
-						<div className="flex items-center gap-2 rounded-full border border-[var(--border)] bg-white/[0.02] px-4 py-2 text-sm text-[var(--muted)]">
+						<div className="flex items-center gap-2 rounded-md border border-console-border bg-white/[0.02] px-4 py-2 text-sm text-console-fg-muted">
 							<Search className="size-4 shrink-0" />
 							<input
 								ref={inputRef}
@@ -180,13 +180,13 @@ export function Topbar({ title }: { title?: string }) {
 									window.setTimeout(() => setOpen(false), 150);
 								}}
 								placeholder="Search projects, runtimes, pages…"
-								className="w-56 bg-transparent text-sm text-white outline-none placeholder:text-[var(--muted)] lg:w-72"
+								className="w-56 bg-transparent text-sm text-console-fg outline-none placeholder:text-console-fg-muted lg:w-72"
 								aria-autocomplete="list"
 								aria-controls={listId}
 								aria-expanded={open && results.length > 0}
 								role="combobox"
 							/>
-							<kbd className="ml-2 rounded-md border border-[var(--border)] px-1.5 py-0.5 text-[10px] text-white/50">
+							<kbd className="ml-2 rounded-sm border border-console-border px-1.5 py-0.5 text-2xs text-console-fg/50">
 								⌘K
 							</kbd>
 						</div>
@@ -195,10 +195,10 @@ export function Topbar({ title }: { title?: string }) {
 							<div
 								id={listId}
 								role="listbox"
-								className="absolute right-0 z-30 mt-2 w-[min(100vw-2rem,24rem)] overflow-hidden rounded-2xl border border-[var(--border)] bg-[#0f0f0f] shadow-2xl"
+								className="absolute right-0 z-30 mt-2 w-[min(100vw-2rem,24rem)] overflow-hidden rounded-lg border border-console-border bg-ink-1 shadow-lg"
 							>
 								{results.length === 0 ? (
-									<div className="px-4 py-3 text-sm text-[var(--muted)]">
+									<div className="px-4 py-3 text-sm text-console-fg-muted">
 										No matches
 									</div>
 								) : (
@@ -208,14 +208,14 @@ export function Topbar({ title }: { title?: string }) {
 												<button
 													type="button"
 													role="option"
-													className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-white/[0.04]"
+													className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-white/[0.04]"
 													onMouseDown={(event) => event.preventDefault()}
 													onClick={() => navigateTo(result)}
 												>
-													<span className="truncate text-white">
+													<span className="truncate text-console-fg">
 														{result.label}
 													</span>
-													<span className="shrink-0 text-[10px] uppercase tracking-[0.14em] text-[var(--muted)]">
+													<span className="shrink-0 text-2xs tracking-wide text-console-fg-muted">
 														{result.group}
 													</span>
 												</button>

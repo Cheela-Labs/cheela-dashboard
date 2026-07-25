@@ -19,21 +19,21 @@ export function MetricCard({
 	return (
 		<div
 			className={cn(
-				"rounded-[24px] border border-[var(--border)] bg-white/[0.02] p-5 transition duration-300 hover:border-[rgba(228,179,40,0.28)]",
+				"rounded-lg border border-console-border bg-white/[0.02] p-5 transition-colors duration-base hover:border-accent/28",
 				className,
 			)}
 		>
 			<div className="flex items-start justify-between gap-4">
 				<div>
-					<div className="text-sm text-[var(--muted)]">{label}</div>
-					<div className="mt-3 text-3xl font-medium tracking-[-0.04em] text-white">
+					<div className="text-sm text-console-fg-muted">{label}</div>
+					<div className="mt-3 font-display text-3xl font-semibold tracking-tight text-console-fg">
 						{typeof value === "number" ? formatNumber(value) : value}
 					</div>
 					{delta ? (
-						<div className="mt-2 text-xs text-[var(--primary)]">{delta}</div>
+						<div className="mt-2 text-xs text-accent">{delta}</div>
 					) : null}
 				</div>
-				<div className="flex size-11 items-center justify-center rounded-2xl border border-[var(--border)] bg-black/40 text-[var(--primary)]">
+				<div className="flex size-11 items-center justify-center rounded-md border border-console-border bg-black/40 text-accent">
 					<Icon className="size-5" />
 				</div>
 			</div>

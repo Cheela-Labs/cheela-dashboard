@@ -44,7 +44,7 @@ export function UpgradeButton({
 
 	if (currentTier === "pro" || currentTier === "enterprise") {
 		return (
-			<div className="rounded-2xl border border-[rgba(52,211,153,0.3)] bg-[rgba(52,211,153,0.08)] px-4 py-3 text-sm text-emerald-300">
+			<div className="rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
 				You are on the {currentTier} plan.
 			</div>
 		);
@@ -78,7 +78,7 @@ export function UpgradeButton({
 				name: "Cheela Cloud",
 				description: "Pro plan",
 				order_id: order.orderId,
-				theme: { color: "#d4a017" },
+				theme: { color: "#FFA600" },
 				handler: async (response: {
 					razorpay_order_id: string;
 					razorpay_payment_id: string;
@@ -107,7 +107,7 @@ export function UpgradeButton({
 				{loading ? "Opening checkout…" : "Upgrade to Pro — $49"}
 			</Button>
 			{message ? (
-				<p className="text-sm text-[var(--muted)]">{message}</p>
+				<p className="text-sm text-console-fg-muted">{message}</p>
 			) : null}
 		</div>
 	);

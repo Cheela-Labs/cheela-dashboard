@@ -1,4 +1,4 @@
-import { SignUp } from "@clerk/nextjs";
+import { AuthForm } from "@/components/auth/auth-form";
 
 export default function SignUpPage() {
 	return (
@@ -12,9 +12,7 @@ export default function SignUpPage() {
 						Create account
 					</h1>
 				</div>
-				<div className="flex justify-center">
-					<SignUp />
-				</div>
+				<AuthForm mode="sign-up" />
 			</div>
 		</div>
 	);

@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
 import { getApiUrl } from "./api-url";
 
 export class ApiError extends Error {
@@ -14,8 +14,8 @@ export class ApiError extends Error {
 }
 
 async function getAuthHeaders(): Promise<HeadersInit> {
-	const session = await auth();
-	const token = await session.getToken();
+	const cookieStore = await cookies();
+	const token = cookieStore.get("sAccessToken")?.value;
 	const headers: Record<string, string> = {
 		"Content-Type": "application/json",
 	};

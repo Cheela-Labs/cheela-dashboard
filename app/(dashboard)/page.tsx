@@ -88,7 +88,7 @@ export default async function OverviewPage() {
 				<Card className="border-danger/25 bg-danger/5 p-5 text-sm text-danger">
 					Could not reach the Cheela API at {getApiUrl()}. Check{" "}
 					<code className="text-accent">NEXT_PUBLIC_API_URL</code>, CORS, and
-					that the server is running with the same Clerk secret.
+					that the server points at the same SuperTokens core.
 				</Card>
 			) : null}
 
@@ -207,15 +207,16 @@ export default async function OverviewPage() {
 								Connected to Cheela Cloud
 							</h2>
 							<p className="max-w-xl text-md leading-relaxed text-console-fg-muted">
-								This dashboard authenticates with Clerk and reads live registry,
-								execution, analytics, and billing data from your deployed API.
+								This dashboard authenticates with SuperTokens and reads live
+								registry, execution, analytics, and billing data from your
+								deployed API.
 							</p>
 						</div>
 						<div className="rounded-lg border border-console-border bg-black/40 p-5 font-mono text-sm text-console-fg-muted">
 							<div className="text-accent">Connection</div>
 							<div className="mt-4 space-y-2 break-all">
 								<div>API {getApiUrl()}</div>
-								<div>Auth Clerk JWT → server</div>
+								<div>Auth SuperTokens session → server</div>
 								<div>Billing Pro $49/mo (USD · Razorpay INR checkout)</div>
 							</div>
 						</div>

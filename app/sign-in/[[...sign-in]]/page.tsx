@@ -1,4 +1,4 @@
-import { SignIn } from "@clerk/nextjs";
+import { AuthForm } from "@/components/auth/auth-form";
 
 export default function SignInPage() {
 	return (
@@ -12,9 +12,7 @@ export default function SignInPage() {
 						Sign in
 					</h1>
 				</div>
-				<div className="flex justify-center">
-					<SignIn />
-				</div>
+				<AuthForm mode="sign-in" />
 			</div>
 		</div>
 	);

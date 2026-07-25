@@ -1,19 +1,13 @@
 "use client";
 
-import { useAuth } from "@clerk/nextjs";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000";
+const PROXY_PREFIX = "/api/proxy";
 
 export function useCheelaApi() {
-	const { getToken } = useAuth();
-
 	async function request<T>(path: string, init?: RequestInit): Promise<T> {
-		const token = await getToken();
-		const response = await fetch(`${API_URL}${path}`, {
+		const response = await fetch(`${PROXY_PREFIX}${path}`, {
 			...init,
 			headers: {
 				"Content-Type": "application/json",
-				...(token ? { Authorization: `Bearer ${token}` } : {}),
 				...(init?.headers ?? {}),
 			},
 		});
@@ -30,5 +24,5 @@ export function useCheelaApi() {
 		return (await response.json()) as T;
 	}
 
-	return { request, apiUrl: API_URL };
+	return { request, apiUrl: PROXY_PREFIX };
 }

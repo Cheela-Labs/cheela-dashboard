@@ -1,7 +1,7 @@
-import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
+import { SuperTokensProvider } from "@/components/providers/supertokens-provider";
 import "./globals.css";
 
 const ranade = localFont({
@@ -31,26 +31,12 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<ClerkProvider
-			appearance={{
-				variables: {
-					colorPrimary: "#ffa600",
-					colorBackground: "#0e0e10",
-					colorText: "#f5f4f0",
-					colorInputBackground: "#050505",
-					colorInputText: "#f5f4f0",
-					borderRadius: "0.75rem",
-					fontFamily: "var(--font-ranade)",
-				},
-			}}
-		>
-			<html lang="en" suppressHydrationWarning>
-				<body
-					className={`${ranade.variable} ${jetbrainsMono.variable} bg-console-bg text-console-fg antialiased`}
-				>
-					{children}
-				</body>
-			</html>
-		</ClerkProvider>
+		<html lang="en" suppressHydrationWarning>
+			<body
+				className={`${ranade.variable} ${jetbrainsMono.variable} bg-console-bg text-console-fg antialiased`}
+			>
+				<SuperTokensProvider>{children}</SuperTokensProvider>
+			</body>
+		</html>
 	);
 }

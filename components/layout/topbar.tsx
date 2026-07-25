@@ -1,9 +1,9 @@
 "use client";
 
-import { UserButton } from "@clerk/nextjs";
 import { Bell, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { UserMenu } from "@/components/layout/user-menu";
 import { Button } from "@/components/ui/button";
 import { useProjects } from "@/lib/projects";
 import { useCheelaApi } from "@/lib/use-cheela-api";
@@ -229,13 +229,7 @@ export function Topbar({ title }: { title?: string }) {
 					<Button variant="ghost" size="sm" aria-label="Notifications">
 						<Bell className="size-4" />
 					</Button>
-					<UserButton
-						appearance={{
-							elements: {
-								avatarBox: "size-9",
-							},
-						}}
-					/>
+					<UserMenu />
 				</div>
 			</div>
 		</header>

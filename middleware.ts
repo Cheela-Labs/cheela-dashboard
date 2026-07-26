@@ -18,20 +18,29 @@ export async function middleware(request: NextRequest) {
 	}
 
 	ensureSuperTokensInit();
-	return withSession(request, async (error, session) => {
-		if (error || !session) {
-			if (request.nextUrl.pathname.startsWith("/api/")) {
-				return NextResponse.json(
-					{ error: { message: "Unauthorized" } },
-					{ status: 401 },
-				);
+	return withSession(
+		request,
+		async (error, session) => {
+			if (error || !session) {
+				if (request.nextUrl.pathname.startsWith("/api/")) {
+					return NextResponse.json(
+						{ error: { message: "Unauthorized" } },
+						{ status: 401 },
+					);
+				}
+				const signInUrl = request.nextUrl.clone();
+				signInUrl.pathname = "/sign-in";
+				return NextResponse.redirect(signInUrl);
 			}
-			const signInUrl = request.nextUrl.clone();
-			signInUrl.pathname = "/sign-in";
-			return NextResponse.redirect(signInUrl);
-		}
-		return NextResponse.next();
-	});
+			return NextResponse.next();
+		},
+		// Without this the session is *required*, so supertokens-node throws
+		// UNAUTHORISED and answers with its own `{"message":"unauthorised"}`
+		// 401 before this handler runs — every signed-out visitor gets raw
+		// JSON instead of the sign-in page. Opting out hands us an undefined
+		// session to branch on instead.
+		{ sessionRequired: false },
+	);
 }
 
 export const config = {

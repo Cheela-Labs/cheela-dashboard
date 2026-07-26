@@ -6,8 +6,7 @@ import type { ProviderInput } from "supertokens-node/recipe/thirdparty/types";
 import { ensureUserProfile } from "./user-profile";
 
 const connectionURI = process.env.SUPERTOKENS_CONNECTION_URI;
-const apiDomain =
-	process.env.SUPERTOKENS_API_DOMAIN ?? "http://localhost:3001";
+const apiDomain = process.env.SUPERTOKENS_API_DOMAIN ?? "http://localhost:3001";
 const websiteDomain =
 	process.env.SUPERTOKENS_WEBSITE_DOMAIN ?? "http://localhost:3001";
 
@@ -59,7 +58,6 @@ export function ensureSuperTokensInit(): void {
 			"SUPERTOKENS_CONNECTION_URI is not set — see apps/dashboard/.env.example",
 		);
 	}
-	initialized = true;
 
 	supertokens.init({
 		framework: "custom",
@@ -113,4 +111,10 @@ export function ensureSuperTokensInit(): void {
 			Session.init(),
 		],
 	});
+
+	// Set only once init() has returned. Setting it beforehand meant a throw
+	// here left the flag latched on, so every later request on the same warm
+	// lambda took the early return above and failed somewhere downstream with
+	// "not initialised" rather than the configuration error that caused it.
+	initialized = true;
 }

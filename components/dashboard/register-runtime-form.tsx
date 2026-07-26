@@ -12,7 +12,10 @@ export function RegisterRuntimeForm() {
 	const { selectedProjectId, assignRuntime } = useProjects();
 	const router = useRouter();
 	const [error, setError] = useState<string | null>(null);
-	const [apiKey, setApiKey] = useState<string | null>(null);
+	const [keys, setKeys] = useState<{
+		deployKey: string;
+		publicKey: string;
+	} | null>(null);
 	const [runtimeId, setRuntimeId] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 
@@ -27,18 +30,20 @@ export function RegisterRuntimeForm() {
 		try {
 			const result = await request<{
 				runtimeId: string;
-				apiKey: string;
+				deployKey: string;
+				publicKey: string;
 			}>("/v1/runtimes", {
 				method: "POST",
+				// No tier here — it follows the account's subscription, and the
+				// server ignores a client-supplied one.
 				body: JSON.stringify({
 					version: form.get("version") || "0.0.0",
-					tier: form.get("tier") || "free",
 					...(name ? { name } : {}),
 				}),
 			});
 
 			setRuntimeId(result.runtimeId);
-			setApiKey(result.apiKey);
+			setKeys({ deployKey: result.deployKey, publicKey: result.publicKey });
 			if (selectedProjectId) {
 				assignRuntime(result.runtimeId, selectedProjectId);
 			}
@@ -49,7 +54,7 @@ export function RegisterRuntimeForm() {
 		}
 	}
 
-	if (apiKey && runtimeId) {
+	if (keys && runtimeId) {
 		return (
 			<Card className="max-w-3xl space-y-4 p-6 sm:p-8">
 				<div className="text-xs uppercase tracking-wide text-accent">
@@ -59,15 +64,35 @@ export function RegisterRuntimeForm() {
 					Runtime identity ready
 				</h2>
 				<p className="text-sm text-console-fg-muted">
-					Store the API key as CHEELA_API_KEY in your project .env, reference it
-					from cheela.config.ts, then run cheela deploy. This key is shown once.
+					Two keys, and they are not interchangeable. Both are shown once — only
+					their hashes are stored.
 				</p>
-				<pre className="overflow-x-auto rounded-[16px] border border-console-border bg-black/50 p-4 font-mono text-xs text-accent">
-					{`runtimeId: ${runtimeId}\nCHEELA_API_KEY=${apiKey}`}
-				</pre>
-				<pre className="overflow-x-auto rounded-[16px] border border-console-border bg-black/50 p-4 font-mono text-xs text-console-fg-muted">
-					{`# .env\nCHEELA_API_KEY=${apiKey}`}
-				</pre>
+
+				<div className="space-y-2">
+					<div className="text-sm text-console-fg">
+						Deploy key — keep secret
+					</div>
+					<p className="text-sm text-console-fg-muted">
+						Store as CHEELA_API_KEY in your project .env, reference it from
+						cheela.config.ts, then run cheela deploy.
+					</p>
+					<pre className="overflow-x-auto rounded-[16px] border border-console-border bg-black/50 p-4 font-mono text-xs text-accent">
+						{`runtimeId: ${runtimeId}\nCHEELA_API_KEY=${keys.deployKey}`}
+					</pre>
+				</div>
+
+				<div className="space-y-2">
+					<div className="text-sm text-console-fg">
+						Public key — safe to embed
+					</div>
+					<p className="text-sm text-console-fg-muted">
+						This is the one the chat widget uses. It can execute but never
+						deploy, so viewing your page source gives nothing away.
+					</p>
+					<pre className="overflow-x-auto rounded-[16px] border border-console-border bg-black/50 p-4 font-mono text-xs text-console-fg-muted">
+						{keys.publicKey}
+					</pre>
+				</div>
 				<Button
 					onClick={() => {
 						router.push("/runtimes");
@@ -92,27 +117,14 @@ export function RegisterRuntimeForm() {
 					/>
 				</label>
 
-				<div className="grid gap-6 sm:grid-cols-2">
-					<label className="block space-y-2 text-sm">
-						<span className="text-console-fg-muted">Version</span>
-						<input
-							name="version"
-							defaultValue="0.0.0"
-							className="w-full rounded-lg border border-console-border bg-black/40 px-4 py-3 text-console-fg outline-none transition focus:border-accent/60"
-						/>
-					</label>
-					<label className="block space-y-2 text-sm">
-						<span className="text-console-fg-muted">Tier</span>
-						<select
-							name="tier"
-							defaultValue="free"
-							className="w-full rounded-lg border border-console-border bg-black/40 px-4 py-3 text-console-fg outline-none transition focus:border-accent/60"
-						>
-							<option value="free">Free</option>
-							<option value="pro">Pro</option>
-						</select>
-					</label>
-				</div>
+				<label className="block space-y-2 text-sm">
+					<span className="text-console-fg-muted">Version</span>
+					<input
+						name="version"
+						defaultValue="0.0.0"
+						className="w-full rounded-lg border border-console-border bg-black/40 px-4 py-3 text-console-fg outline-none transition focus:border-accent/60"
+					/>
+				</label>
 
 				<p className="text-sm leading-6 text-console-fg-muted">
 					Provider, model, and capabilities are configured locally and published

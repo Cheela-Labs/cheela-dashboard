@@ -1,4 +1,6 @@
 import { notFound } from "next/navigation";
+import { ProviderEndpointForm } from "@/components/dashboard/provider-endpoint-form";
+import { RuntimeKeysCard } from "@/components/dashboard/runtime-keys-card";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -86,10 +88,8 @@ export default async function RuntimeDetailPage({
 							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
 								<dt className="text-console-fg-muted">Transport</dt>
 								<dd className="text-console-fg">
-									{runtime.connection?.transport ??
-										(runtime.tier === "pro"
-											? "Persistent session"
-											: "Signed HTTPS")}
+									{/* One transport for every tier now. */}
+									{runtime.connection?.transport ?? "Signed HTTPS"}
 								</dd>
 							</div>
 							<div className="flex justify-between gap-4">
@@ -105,6 +105,25 @@ export default async function RuntimeDetailPage({
 							</div>
 						) : null}
 					</Card>
+				</FadeIn>
+
+				<FadeIn delay={0.075}>
+					<RuntimeKeysCard
+						runtimeId={runtime.runtimeId}
+						deployKeyPrefix={runtime.deployKeyPrefix ?? "—"}
+						publicKeyPrefix={runtime.publicKeyPrefix ?? "—"}
+						allowedOrigins={runtime.allowedOrigins ?? []}
+					/>
+				</FadeIn>
+
+				<FadeIn delay={0.1}>
+					<ProviderEndpointForm
+						runtimeId={runtime.runtimeId}
+						provider={runtime.providerName}
+						model={runtime.modelName === "—" ? "" : runtime.modelName}
+						endpoint={runtime.endpoint}
+						hasProviderKey={Boolean(runtime.hasProviderKey)}
+					/>
 				</FadeIn>
 
 				<FadeIn delay={0.1}>

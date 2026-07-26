@@ -5,9 +5,15 @@ export type RuntimeSummary = {
 	version: string;
 	tier: RuntimeTier;
 	capabilities: string[] | Array<{ name: string }>;
-	provider: string | { provider: string; model?: string };
+	provider: string | { provider: string; model?: string; hasApiKey?: boolean };
 	model?: string;
 	endpoint?: string;
+	/** Whether a provider API key is stored for this runtime. The key itself is never returned. */
+	hasProviderKey?: boolean;
+	/** Display fragments only — the keys themselves are stored hashed. */
+	deployKeyPrefix?: string;
+	publicKeyPrefix?: string;
+	allowedOrigins?: string[];
 	status?: "healthy" | "degraded" | "offline";
 	updatedAt: string;
 	createdAt?: string;
@@ -35,6 +41,33 @@ export type ExecutionSummary = {
 	error?: string;
 };
 
+export type AnalyticsBucket = "hour" | "day";
+
+export type AnalyticsRange = {
+	from: string;
+	to: string;
+	bucket: AnalyticsBucket;
+	/** True when the tier narrowed the requested window or bucket. */
+	clamped: boolean;
+	maxWindowDays: number;
+};
+
+export type AnalyticsSeriesPoint = {
+	t: string;
+	requests: number;
+	errors: number;
+	p50: number;
+	p95: number;
+	totalTokens: number;
+};
+
+export type RuntimeBreakdownEntry = {
+	runtimeId: string;
+	requests: number;
+	errors: number;
+	averageLatencyMs: number;
+};
+
 export type AnalyticsSummary = {
 	ownerId?: string;
 	requests: number;
@@ -48,6 +81,11 @@ export type AnalyticsSummary = {
 	runtimeUsage: Record<string, number>;
 	popularCapabilities: Record<string, number>;
 	errors: number;
+	/** Optional so an older control plane still renders the cards above. */
+	range?: AnalyticsRange;
+	series?: AnalyticsSeriesPoint[];
+	latency?: { p50: number; p95: number; p99: number };
+	runtimeBreakdown?: RuntimeBreakdownEntry[];
 };
 
 export type OwnerUsage = {
@@ -57,6 +95,14 @@ export type OwnerUsage = {
 	capabilityCalls: number;
 	inputTokens: number;
 	outputTokens: number;
+	/** Ceilings the counts above are measured against. Optional so an older API still renders. */
+	limits?: {
+		maxExecutionsPerDay: number;
+		maxCapabilityCallsPerDay: number;
+	};
+	/** ISO. The usage window is the UTC day. */
+	periodStart?: string;
+	periodEnd?: string;
 };
 
 export type TraceCapabilityCall = {

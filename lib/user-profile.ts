@@ -1,10 +1,20 @@
 import { MongoClient } from "mongodb";
 
+/**
+ * Shape of a document in the shared `users` collection.
+ *
+ * The **server** owns `tier`, `subscriptionStatus`, and `currentPeriodEnd` —
+ * it is the only writer of those once the row exists. This file only ever seeds
+ * a new row at sign-up, via `$setOnInsert`, so the two sides cannot fight.
+ */
 export interface UserProfile {
 	userId: string;
 	email: string;
 	createdAt: string;
 	tier: "free" | "pro" | "enterprise";
+	subscriptionStatus: "none" | "active" | "past_due" | "cancelled";
+	/** ISO timestamp, or null when there is no paid period. */
+	currentPeriodEnd: string | null;
 }
 
 let client: MongoClient | undefined;
@@ -41,6 +51,8 @@ export async function ensureUserProfile(
 					email,
 					createdAt: new Date().toISOString(),
 					tier: "free",
+					subscriptionStatus: "none",
+					currentPeriodEnd: null,
 				},
 			},
 			{ upsert: true },

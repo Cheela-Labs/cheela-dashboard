@@ -65,8 +65,18 @@ export async function fetchExecution(executionId: string) {
 	};
 }
 
-export async function fetchAnalytics() {
-	return apiFetch<AnalyticsSummary>("/v1/analytics/summary");
+export async function fetchAnalytics(
+	query: { from?: string; to?: string; bucket?: string } = {},
+) {
+	const params = new URLSearchParams();
+	for (const [key, value] of Object.entries(query)) {
+		if (value) params.set(key, value);
+	}
+
+	const search = params.toString();
+	return apiFetch<AnalyticsSummary>(
+		`/v1/analytics/summary${search ? `?${search}` : ""}`,
+	);
 }
 
 export async function fetchUsage() {

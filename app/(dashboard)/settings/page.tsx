@@ -1,5 +1,6 @@
 import { UpgradeButton } from "@/components/billing/upgrade-button";
 import { UpgradePlanDialog } from "@/components/dashboard/dialogs/upgrade-plan-dialog";
+import { QuotaBar } from "@/components/dashboard/quota-bar";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -11,6 +12,16 @@ import { formatNumber } from "@/lib/utils";
 export const metadata = {
 	title: "Settings",
 };
+
+/** "in 4h" / "in 35m" — the window is the UTC day, which is not obvious from a raw timestamp. */
+function formatResetIn(periodEnd: string): string {
+	const remainingMs = new Date(periodEnd).getTime() - Date.now();
+	if (remainingMs <= 0) return "shortly";
+
+	const hours = Math.floor(remainingMs / 3_600_000);
+	if (hours >= 1) return `in ${hours}h`;
+	return `in ${Math.max(1, Math.round(remainingMs / 60_000))}m`;
+}
 
 function formatPlanPrice(plan: {
 	priceUsd?: number | null;
@@ -39,17 +50,24 @@ export default async function SettingsPage() {
 	}
 
 	const fallbackPlans = [
+		// Mirrors GET /v1/billing/plans. Kept in sync deliberately: this fallback
+		// is what users see when the API is unreachable, so it must not advertise
+		// anything the server no longer claims.
 		{
 			id: "free",
 			name: "Free",
 			priceUsd: 0,
-			features: ["HTTP transport", "Tracing"],
+			features: ["100 executions/day", "Signed HTTPS transport", "Tracing"],
 		},
 		{
 			id: "pro",
 			name: "Pro",
 			priceUsd: 49,
-			features: ["Sessions", "Advanced analytics"],
+			features: [
+				"10,000 executions/day",
+				"90-day retention",
+				"Advanced analytics",
+			],
 		},
 		{
 			id: "enterprise",
@@ -87,38 +105,46 @@ export default async function SettingsPage() {
 						<code className="text-accent">{getApiUrl()}</code>
 					</p>
 					{usage ? (
-						<dl className="space-y-3 text-sm">
-							<div className="flex justify-between gap-4">
-								<dt className="text-console-fg-muted">Tier</dt>
-								<dd className="uppercase tracking-wide text-console-fg">
+						<div className="space-y-5">
+							<div className="flex justify-between gap-4 text-sm">
+								<span className="text-console-fg-muted">Tier</span>
+								<span className="uppercase tracking-wide text-console-fg">
 									{usage.tier}
-								</dd>
+								</span>
 							</div>
-							<div className="flex justify-between gap-4">
-								<dt className="text-console-fg-muted">Executions today</dt>
-								<dd className="text-console-fg">
-									{formatNumber(usage.executions)}
-								</dd>
-							</div>
-							<div className="flex justify-between gap-4">
-								<dt className="text-console-fg-muted">Capability calls</dt>
-								<dd className="text-console-fg">
-									{formatNumber(usage.capabilityCalls)}
-								</dd>
-							</div>
-							<div className="flex justify-between gap-4">
-								<dt className="text-console-fg-muted">Input tokens</dt>
-								<dd className="text-console-fg">
-									{formatNumber(usage.inputTokens)}
-								</dd>
-							</div>
-							<div className="flex justify-between gap-4">
-								<dt className="text-console-fg-muted">Output tokens</dt>
-								<dd className="text-console-fg">
-									{formatNumber(usage.outputTokens)}
-								</dd>
-							</div>
-						</dl>
+
+							<QuotaBar
+								label="Executions"
+								used={usage.executions}
+								limit={usage.limits?.maxExecutionsPerDay}
+							/>
+							<QuotaBar
+								label="Capability calls"
+								used={usage.capabilityCalls}
+								limit={usage.limits?.maxCapabilityCallsPerDay}
+							/>
+
+							<dl className="space-y-3 border-t border-console-border pt-4 text-sm">
+								<div className="flex justify-between gap-4">
+									<dt className="text-console-fg-muted">Input tokens</dt>
+									<dd className="text-console-fg">
+										{formatNumber(usage.inputTokens)}
+									</dd>
+								</div>
+								<div className="flex justify-between gap-4">
+									<dt className="text-console-fg-muted">Output tokens</dt>
+									<dd className="text-console-fg">
+										{formatNumber(usage.outputTokens)}
+									</dd>
+								</div>
+							</dl>
+
+							{usage.periodEnd ? (
+								<p className="text-xs text-console-fg-muted">
+									Resets {formatResetIn(usage.periodEnd)} (UTC day).
+								</p>
+							) : null}
+						</div>
 					) : (
 						<p className="text-sm text-console-fg-muted">
 							Usage is unavailable until the API is reachable.

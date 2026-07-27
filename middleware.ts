@@ -1,15 +1,51 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { withSession } from "supertokens-node/nextjs";
+import { withPreParsedRequestResponse } from "supertokens-node/nextjs";
+import Session from "supertokens-node/recipe/session";
 import { ensureSuperTokensInit } from "@/lib/supertokens-backend";
+
+// The error class is not published as its own subpath — Session.Error is how
+// supertokens-node exposes it.
+const SessionError = Session.Error;
 
 function isPublicRoute(pathname: string): boolean {
 	return (
 		pathname.startsWith("/sign-in") ||
 		pathname.startsWith("/sign-up") ||
 		pathname.startsWith("/auth/callback") ||
+		pathname.startsWith("/auth/refresh") ||
 		pathname.startsWith("/api/auth") ||
 		pathname.startsWith("/api/health")
 	);
+}
+
+function unauthorizedJson(): NextResponse {
+	return NextResponse.json(
+		{ error: { message: "Unauthorized" } },
+		{ status: 401 },
+	);
+}
+
+function redirectTo(request: NextRequest, pathname: string): NextResponse {
+	const url = request.nextUrl.clone();
+	url.pathname = pathname;
+	url.search = "";
+	return NextResponse.redirect(url);
+}
+
+/**
+ * A browser navigation carries no fetch interceptor, so a 401 here is a dead
+ * end: nothing on the client is listening to trade the refresh token in. Send
+ * the visitor to a page that can do it and then bounce them back.
+ */
+function redirectToRefresh(request: NextRequest): NextResponse {
+	const url = request.nextUrl.clone();
+	url.pathname = "/auth/refresh";
+	url.search = "";
+	url.searchParams.set(
+		"returnTo",
+		`${request.nextUrl.pathname}${request.nextUrl.search}`,
+	);
+	return NextResponse.redirect(url);
 }
 
 export async function middleware(request: NextRequest) {
@@ -18,28 +54,56 @@ export async function middleware(request: NextRequest) {
 	}
 
 	ensureSuperTokensInit();
-	return withSession(
+
+	const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
+
+	// Deliberately not `withSession`: it runs getSession inside
+	// withPreParsedRequestResponse, whose own catch hands the error to
+	// SuperTokens' errorHandler and returns that response. The error never
+	// reaches withSession's outer catch, so its `(error, session)` handler is
+	// unreachable for anything getSession *throws* — every such visitor got
+	// SuperTokens' raw JSON instead of our redirect. Calling getSession here
+	// keeps the error ours to branch on.
+	return withPreParsedRequestResponse(
 		request,
-		async (error, session) => {
-			if (error || !session) {
-				if (request.nextUrl.pathname.startsWith("/api/")) {
-					return NextResponse.json(
-						{ error: { message: "Unauthorized" } },
-						{ status: 401 },
-					);
+		async (baseRequest, baseResponse) => {
+			try {
+				// `sessionRequired: false` only covers a missing or unparseable
+				// token — those come back as an undefined session below. A
+				// well-formed token that is merely expired still throws.
+				const session = await Session.getSession(baseRequest, baseResponse, {
+					sessionRequired: false,
+				});
+
+				if (!session) {
+					return isApiRoute
+						? unauthorizedJson()
+						: redirectTo(request, "/sign-in");
 				}
-				const signInUrl = request.nextUrl.clone();
-				signInUrl.pathname = "/sign-in";
-				return NextResponse.redirect(signInUrl);
+
+				return NextResponse.next();
+			} catch (error) {
+				if (
+					SessionError.isErrorFromSuperTokens(error) &&
+					error.type === SessionError.TRY_REFRESH_TOKEN
+				) {
+					// The access token expired but the refresh token is very
+					// likely still good, so don't drop them at /sign-in.
+					return isApiRoute ? unauthorizedJson() : redirectToRefresh(request);
+				}
+
+				if (
+					SessionError.isErrorFromSuperTokens(error) &&
+					error.type === SessionError.UNAUTHORISED
+				) {
+					return isApiRoute
+						? unauthorizedJson()
+						: redirectTo(request, "/sign-in");
+				}
+
+				throw error;
 			}
-			return NextResponse.next();
 		},
-		// Without this the session is *required*, so supertokens-node throws
-		// UNAUTHORISED and answers with its own `{"message":"unauthorised"}`
-		// 401 before this handler runs — every signed-out visitor gets raw
-		// JSON instead of the sign-in page. Opting out hands us an undefined
-		// session to branch on instead.
-		{ sessionRequired: false },
 	);
 }
 

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
 import localFont from "next/font/local";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
 import { SuperTokensProvider } from "@/components/providers/supertokens-provider";
 import "./globals.css";
 
@@ -36,6 +37,7 @@ export default function RootLayout({
 				className={`${ranade.variable} ${jetbrainsMono.variable} bg-console-bg text-console-fg antialiased`}
 			>
 				<SuperTokensProvider>{children}</SuperTokensProvider>
+				<GoogleAnalytics />
 			</body>
 		</html>
 	);

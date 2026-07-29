@@ -1,6 +1,6 @@
+import SuperTokens from "supertokens-web-js";
 import EmailPassword from "supertokens-web-js/recipe/emailpassword";
 import Session from "supertokens-web-js/recipe/session";
-import SuperTokens from "supertokens-web-js";
 import ThirdParty from "supertokens-web-js/recipe/thirdparty";
 
 let initialized = false;

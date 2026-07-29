@@ -122,7 +122,6 @@ export default async function RuntimeDetailPage({
 						provider={runtime.providerName}
 						model={runtime.modelName === "—" ? "" : runtime.modelName}
 						endpoint={runtime.endpoint}
-						hasProviderKey={Boolean(runtime.hasProviderKey)}
 					/>
 				</FadeIn>
 

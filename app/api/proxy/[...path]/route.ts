@@ -21,7 +21,8 @@ async function handle(request: NextRequest) {
 		const upstream = await fetch(targetUrl, {
 			method: request.method,
 			headers: {
-				"Content-Type": request.headers.get("content-type") ?? "application/json",
+				"Content-Type":
+					request.headers.get("content-type") ?? "application/json",
 				Authorization: `Bearer ${session.getAccessToken()}`,
 			},
 			body: hasBody ? await request.text() : undefined,
@@ -32,7 +33,8 @@ async function handle(request: NextRequest) {
 		return new NextResponse(responseBody, {
 			status: upstream.status,
 			headers: {
-				"Content-Type": upstream.headers.get("content-type") ?? "application/json",
+				"Content-Type":
+					upstream.headers.get("content-type") ?? "application/json",
 			},
 		});
 	});

@@ -12,10 +12,11 @@ type Mode = "sign-in" | "sign-up";
 type ThirdPartyId = "google" | "github";
 
 async function startThirdPartySignIn(thirdPartyId: ThirdPartyId) {
-	const authUrl = await ThirdParty.getAuthorisationURLWithQueryParamsAndSetState({
-		thirdPartyId,
-		frontendRedirectURI: `${window.location.origin}/auth/callback/${thirdPartyId}`,
-	});
+	const authUrl =
+		await ThirdParty.getAuthorisationURLWithQueryParamsAndSetState({
+			thirdPartyId,
+			frontendRedirectURI: `${window.location.origin}/auth/callback/${thirdPartyId}`,
+		});
 	window.location.assign(authUrl);
 }
 

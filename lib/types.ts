@@ -5,11 +5,19 @@ export type RuntimeSummary = {
 	version: string;
 	tier: RuntimeTier;
 	capabilities: string[] | Array<{ name: string }>;
-	provider: string | { provider: string; model?: string; hasApiKey?: boolean };
+	/**
+	 * Optional because the control plane stopped sending it per-runtime: every
+	 * runtime executes on one central credential and model now, so the list route
+	 * omits it entirely and only the detail route reports it.
+	 *
+	 * This type is a hand-written assertion about a JSON response, not something
+	 * derived from the server, so declaring it required did not make it present —
+	 * it only stopped `tsc` from noticing when the field went away, and the
+	 * dereference below threw at runtime instead.
+	 */
+	provider?: string | { provider: string; model?: string };
 	model?: string;
 	endpoint?: string;
-	/** Whether a provider API key is stored for this runtime. The key itself is never returned. */
-	hasProviderKey?: boolean;
 	/** Display fragments only — the keys themselves are stored hashed. */
 	deployKeyPrefix?: string;
 	publicKeyPrefix?: string;
@@ -138,13 +146,13 @@ export function normalizeRuntime(runtime: RuntimeSummary): RuntimeSummary & {
 		typeof cap === "string" ? cap : cap.name,
 	);
 	const providerName =
-		typeof runtime.provider === "string"
+		(typeof runtime.provider === "string"
 			? runtime.provider
-			: runtime.provider.provider;
+			: runtime.provider?.provider) ?? "—";
 	const modelName =
 		runtime.model ??
 		(typeof runtime.provider === "object"
-			? runtime.provider.model
+			? runtime.provider?.model
 			: undefined) ??
 		"—";
 

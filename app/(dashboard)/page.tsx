@@ -54,10 +54,25 @@ export default async function OverviewPage() {
 					errors: 0,
 				};
 
-	const apiError =
-		runtimesResult.status === "rejected" ||
-		executionsResult.status === "rejected" ||
-		analyticsResult.status === "rejected";
+	// Report what actually failed. This used to be a boolean that rendered
+	// "could not reach the API" for any rejection at all, which sent people
+	// checking DNS and CORS when the real cause was a 401, or a mapping error in
+	// this app throwing on a response that arrived perfectly well.
+	const failures = (
+		[
+			["runtimes", runtimesResult],
+			["executions", executionsResult],
+			["analytics", analyticsResult],
+		] as const
+	)
+		.filter(([, result]) => result.status === "rejected")
+		.map(([name, result]) => ({
+			name,
+			message:
+				(result as PromiseRejectedResult).reason instanceof Error
+					? ((result as PromiseRejectedResult).reason as Error).message
+					: String((result as PromiseRejectedResult).reason),
+		}));
 
 	return (
 		<div className="space-y-10">
@@ -84,11 +99,25 @@ export default async function OverviewPage() {
 				/>
 			</FadeIn>
 
-			{apiError ? (
-				<Card className="border-danger/25 bg-danger/5 p-5 text-sm text-danger">
-					Could not reach the Cheela API at {getApiUrl()}. Check{" "}
-					<code className="text-accent">NEXT_PUBLIC_API_URL</code>, CORS, and
-					that the server points at the same SuperTokens core.
+			{failures.length > 0 ? (
+				<Card className="space-y-2 border-danger/25 bg-danger/5 p-5 text-sm text-danger">
+					<div>
+						{failures.length} of 3 requests to{" "}
+						<code className="text-accent">{getApiUrl()}</code> failed:
+					</div>
+					<ul className="space-y-1">
+						{failures.map((failure) => (
+							<li key={failure.name}>
+								<code className="text-accent">{failure.name}</code> —{" "}
+								{failure.message}
+							</li>
+						))}
+					</ul>
+					<div className="text-console-fg-muted">
+						A 401 usually means this app and the server disagree about the
+						SuperTokens core; a network error means{" "}
+						<code className="text-accent">NEXT_PUBLIC_API_URL</code> or CORS.
+					</div>
 				</Card>
 			) : null}
 

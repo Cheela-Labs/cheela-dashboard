@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
 import {
 	Dialog,
 	DialogContent,
@@ -49,6 +50,26 @@ export function RuntimeKeysCard({
 	);
 	const [error, setError] = useState<string | null>(null);
 	const [busy, setBusy] = useState(false);
+	const [revealed, setRevealed] = useState<Partial<Record<KeyType, string>>>(
+		{},
+	);
+
+	async function reveal(type: KeyType) {
+		setBusy(true);
+		setError(null);
+
+		try {
+			const result = await request<{ apiKey: string }>(
+				`/v1/runtimes/${runtimeId}/reveal-key`,
+				{ method: "POST", body: JSON.stringify({ type }) },
+			);
+			setRevealed((current) => ({ ...current, [type]: result.apiKey }));
+		} catch (err) {
+			setError(err instanceof Error ? err.message : "Could not reveal the key");
+		} finally {
+			setBusy(false);
+		}
+	}
 
 	async function rotate(type: KeyType) {
 		setBusy(true);
@@ -59,8 +80,10 @@ export function RuntimeKeysCard({
 				`/v1/runtimes/${runtimeId}/rotate-key`,
 				{ method: "POST", body: JSON.stringify({ type }) },
 			);
-			// Shown once — only the hash is stored, so there is no second chance.
 			setIssued({ type, key: result.apiKey });
+			// The replacement is readable from now on, so keep the row in sync
+			// rather than leaving it showing the superseded key.
+			setRevealed((current) => ({ ...current, [type]: result.apiKey }));
 			router.refresh();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Rotation failed");
@@ -79,6 +102,7 @@ export function RuntimeKeysCard({
 				body: JSON.stringify({ type }),
 			});
 			setIssued(null);
+			setRevealed((current) => ({ ...current, [type]: undefined }));
 			router.refresh();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Revocation failed");
@@ -116,9 +140,9 @@ export function RuntimeKeysCard({
 			<div className="space-y-1">
 				<h2 className="text-lg font-medium text-console-fg">API keys</h2>
 				<p className="text-sm leading-6 text-console-fg-muted">
-					Keys are stored hashed and shown only once. Rotating issues a
-					replacement and keeps the old key working for 24 hours; revoking cuts
-					it off immediately.
+					Keys are encrypted at rest and can be read back whenever you need
+					them. Rotating issues a replacement and keeps the old key working for
+					24 hours; revoking cuts it off immediately.
 				</p>
 			</div>
 
@@ -127,6 +151,9 @@ export function RuntimeKeysCard({
 				description="Secret. Used by cheela deploy and CI. Never put this in a browser."
 				prefix={deployKeyPrefix}
 				busy={busy}
+				revealedKey={revealed.deploy}
+				onReveal={() => reveal("deploy")}
+				onHide={() => setRevealed((c) => ({ ...c, deploy: undefined }))}
 				onRotate={() => rotate("deploy")}
 				onRevoke={() => revoke("deploy")}
 			/>
@@ -136,20 +163,26 @@ export function RuntimeKeysCard({
 				description="Embeddable. Used by the chat widget. Can execute, never deploy."
 				prefix={publicKeyPrefix}
 				busy={busy}
+				revealedKey={revealed.public}
+				onReveal={() => reveal("public")}
+				onHide={() => setRevealed((c) => ({ ...c, public: undefined }))}
 				onRotate={() => rotate("public")}
 				onRevoke={() => revoke("public")}
 			/>
 
 			{issued ? (
 				<div className="space-y-2 rounded-[16px] border border-accent/40 bg-accent/5 p-4">
-					<div className="text-xs uppercase tracking-wide text-accent">
-						New {issued.type} key — copy it now
+					<div className="flex items-center justify-between gap-3">
+						<div className="text-xs uppercase tracking-wide text-accent">
+							New {issued.type} key
+						</div>
+						<CopyButton value={issued.key} />
 					</div>
 					<pre className="overflow-x-auto font-mono text-xs text-console-fg">
 						{issued.key}
 					</pre>
 					<p className="text-xs text-console-fg-muted">
-						This is the only time it will be shown.
+						The previous key keeps working for 24 hours.
 					</p>
 				</div>
 			) : null}
@@ -189,6 +222,9 @@ function KeyRow({
 	description,
 	prefix,
 	busy,
+	revealedKey,
+	onReveal,
+	onHide,
 	onRotate,
 	onRevoke,
 }: {
@@ -196,6 +232,9 @@ function KeyRow({
 	description: string;
 	prefix: string;
 	busy: boolean;
+	revealedKey?: string;
+	onReveal: () => void;
+	onHide: () => void;
 	onRotate: () => void;
 	onRevoke: () => void;
 }) {
@@ -203,11 +242,36 @@ function KeyRow({
 		<div className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-console-border bg-white/[0.02] p-4">
 			<div className="min-w-0 space-y-1">
 				<div className="text-sm text-console-fg">{title}</div>
-				<div className="font-mono text-xs text-console-fg-muted">{prefix}</div>
+				{revealedKey ? (
+					<pre className="overflow-x-auto font-mono text-xs text-console-fg">
+						{revealedKey}
+					</pre>
+				) : (
+					<div className="font-mono text-xs text-console-fg-muted">
+						{prefix}
+					</div>
+				)}
 				<p className="text-xs text-console-fg-muted">{description}</p>
 			</div>
 
 			<div className="flex shrink-0 gap-2">
+				{revealedKey ? (
+					<>
+						<CopyButton value={revealedKey} />
+						<Button disabled={busy} onClick={onHide} size="sm" variant="ghost">
+							Hide
+						</Button>
+					</>
+				) : (
+					<Button
+						disabled={busy}
+						onClick={onReveal}
+						size="sm"
+						variant="secondary"
+					>
+						Reveal
+					</Button>
+				)}
 				<Button
 					size="sm"
 					variant="secondary"

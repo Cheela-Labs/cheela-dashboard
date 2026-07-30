@@ -68,7 +68,7 @@ export function RuntimeCard({ runtime }: { runtime: RuntimeCardData }) {
 						{runtime.connection?.status ?? runtime.status}
 						{runtime.connection?.transport
 							? ` · ${runtime.connection.transport}`
-							: ` · ${runtime.tier} transport`}
+							: ""}
 					</span>
 					<span>{formatRelativeTime(runtime.updatedAt)}</span>
 				</div>

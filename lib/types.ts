@@ -1,4 +1,5 @@
-export type RuntimeTier = "free" | "pro";
+/** Mirrors the server's SubscriptionTier — enterprise accounts exist and this used to omit them. */
+export type RuntimeTier = "free" | "pro" | "enterprise";
 
 export type RuntimeSummary = {
 	runtimeId: string;
@@ -18,7 +19,7 @@ export type RuntimeSummary = {
 	provider?: string | { provider: string; model?: string };
 	model?: string;
 	endpoint?: string;
-	/** Display fragments only — the keys themselves are stored hashed. */
+	/** Display fragments. The full keys are recoverable via POST /reveal-key. */
 	deployKeyPrefix?: string;
 	publicKeyPrefix?: string;
 	allowedOrigins?: string[];
@@ -65,7 +66,8 @@ export type AnalyticsSeriesPoint = {
 	requests: number;
 	errors: number;
 	p50: number;
-	p95: number;
+	/** Null when the tier does not include it. */
+	p95: number | null;
 	totalTokens: number;
 };
 
@@ -92,7 +94,8 @@ export type AnalyticsSummary = {
 	/** Optional so an older control plane still renders the cards above. */
 	range?: AnalyticsRange;
 	series?: AnalyticsSeriesPoint[];
-	latency?: { p50: number; p95: number; p99: number };
+	/** p95/p99 are null when the tier does not include them. */
+	latency?: { p50: number; p95: number | null; p99: number | null };
 	runtimeBreakdown?: RuntimeBreakdownEntry[];
 };
 
@@ -104,9 +107,10 @@ export type OwnerUsage = {
 	inputTokens: number;
 	outputTokens: number;
 	/** Ceilings the counts above are measured against. Optional so an older API still renders. */
+	/** `null` for either field means unlimited (enterprise). */
 	limits?: {
-		maxExecutionsPerDay: number;
-		maxCapabilityCallsPerDay: number;
+		maxExecutionsPerDay: number | null;
+		maxCapabilityCallsPerDay: number | null;
 	};
 	/** ISO. The usage window is the UTC day. */
 	periodStart?: string;
@@ -161,7 +165,9 @@ export function normalizeRuntime(runtime: RuntimeSummary): RuntimeSummary & {
 		capabilityNames,
 		providerName,
 		modelName,
-		status: runtime.status ?? "healthy",
+		// An absent signal is not a positive one. Defaulting to "healthy" meant a
+		// runtime whose status the API did not send rendered as fine.
+		status: runtime.status ?? "offline",
 		connection: runtime.connection,
 		deployment: runtime.deployment,
 	};

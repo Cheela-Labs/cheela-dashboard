@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { withSession } from "supertokens-node/nextjs";
 import { ensureSuperTokensInit } from "@/lib/supertokens-backend";
-import { getUserProfile } from "@/lib/user-profile";
+import { effectiveTier, getUserProfile } from "@/lib/user-profile";
 
 export async function GET(request: NextRequest) {
 	ensureSuperTokensInit();
@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
 		return NextResponse.json({
 			userId: session.getUserId(),
 			email: profile?.email ?? null,
-			tier: profile?.tier ?? "free",
+			// Effective, not stored — see lib/user-profile.ts.
+			tier: effectiveTier(profile),
 		});
 	});
 }

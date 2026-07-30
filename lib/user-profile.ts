@@ -17,15 +17,23 @@ export interface UserProfile {
 	currentPeriodEnd: string | null;
 }
 
-let client: MongoClient | undefined;
+/**
+ * Cached on globalThis, not in module scope.
+ *
+ * Next.js re-evaluates a module on every hot reload, so a module-scoped client
+ * leaks its whole connection pool on each edit — the well-known way to exhaust
+ * a local Mongo during a long session. In production this simply reuses one
+ * pool per instance.
+ */
+const globalForMongo = globalThis as typeof globalThis & {
+	__cheelaMongo?: MongoClient;
+};
 
 function getClient(): MongoClient | undefined {
 	const uri = process.env.MONGODB_URI;
 	if (!uri) return undefined;
-	if (!client) {
-		client = new MongoClient(uri);
-	}
-	return client;
+	globalForMongo.__cheelaMongo ??= new MongoClient(uri, { maxPoolSize: 10 });
+	return globalForMongo.__cheelaMongo;
 }
 
 function getCollection() {
@@ -69,4 +77,29 @@ export async function getUserProfile(
 	const collection = getCollection();
 	if (!collection) return null;
 	return collection.findOne({ userId }, { projection: { _id: 0 } });
+}
+
+/**
+ * The tier to actually show, which is not the same as the stored one.
+ *
+ * The server never reads `tier` directly — it goes through `effectiveTier`,
+ * because a stored "pro" outlives its `currentPeriodEnd` and there is no
+ * recurring billing to renew it. Reading the raw field here meant the dashboard
+ * displayed **Pro** for a lapsed subscription while every API call it made was
+ * enforced as **free**: exactly the multi-store tier drift the server
+ * consolidated away.
+ *
+ * Kept identical to `apps/server/src/users/effective-tier.ts` on purpose. If
+ * these ever need to differ, something is wrong with one of them.
+ */
+export function effectiveTier(
+	profile: Pick<UserProfile, "tier" | "currentPeriodEnd"> | null,
+	now = new Date(),
+): UserProfile["tier"] {
+	if (!profile) return "free";
+	if (profile.tier === "free" || profile.tier === "enterprise") {
+		return profile.tier;
+	}
+	if (!profile.currentPeriodEnd) return "free";
+	return new Date(profile.currentPeriodEnd) > now ? profile.tier : "free";
 }

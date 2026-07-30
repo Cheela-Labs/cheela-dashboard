@@ -5,8 +5,8 @@ const WARN_AT = 0.8;
 /**
  * One metered resource against its ceiling.
  *
- * An infinite limit (enterprise) renders as a plain count — a progress bar
- * against infinity is noise.
+ * An unlimited ceiling (enterprise, sent as `null`) renders as a plain count —
+ * a progress bar against no limit is noise.
  */
 export function QuotaBar({
 	label,
@@ -15,9 +15,10 @@ export function QuotaBar({
 }: {
 	label: string;
 	used: number;
-	limit?: number;
+	/** `null` means unlimited — the wire format for an enterprise ceiling. */
+	limit?: number | null;
 }) {
-	const unlimited = limit === undefined || !Number.isFinite(limit);
+	const unlimited = limit === undefined || limit === null;
 	const ratio = unlimited ? 0 : Math.min(1, used / Math.max(limit, 1));
 	const warning = !unlimited && ratio >= WARN_AT;
 

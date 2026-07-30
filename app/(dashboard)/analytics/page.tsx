@@ -143,16 +143,8 @@ export default async function AnalyticsPage({
 								{latency ? (
 									<dl className="flex gap-6 text-sm">
 										<LatencyStat label="p50" value={latency.p50} />
-										<LatencyStat
-											label="p95"
-											value={latency.p95}
-											locked={latency.p95 === 0 && latency.p50 > 0}
-										/>
-										<LatencyStat
-											label="p99"
-											value={latency.p99}
-											locked={latency.p99 === 0 && latency.p50 > 0}
-										/>
+										<LatencyStat label="p95" value={latency.p95} />
+										<LatencyStat label="p99" value={latency.p99} />
 									</dl>
 								) : null}
 							</div>
@@ -256,18 +248,22 @@ export default async function AnalyticsPage({
 /**
  * A latency percentile beside the chart title.
  *
- * p95/p99 come back as 0 for free-tier owners — the server withholds the depth
- * rather than the dashboard hiding it, so this only has to say why.
+ * `null` means the tier does not include this percentile — the server withholds
+ * the depth rather than the dashboard hiding it, so this only has to say why.
+ *
+ * It used to arrive as `0` and this component inferred the gate from
+ * `value === 0 && p50 > 0`, which broke on exactly the accounts most likely to
+ * be looking: a free tenant with no traffic has p50 of 0 too, so the upgrade
+ * prompt disappeared and "p95: 0 ms" was rendered as though measured.
  */
 function LatencyStat({
 	label,
 	value,
-	locked = false,
 }: {
 	label: string;
-	value: number;
-	locked?: boolean;
+	value: number | null;
 }) {
+	const locked = value === null;
 	return (
 		<div>
 			<dt className="text-xs uppercase tracking-wide text-console-fg-muted">

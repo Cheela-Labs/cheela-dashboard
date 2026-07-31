@@ -53,6 +53,7 @@ export function RuntimeKeysCard({
 	const [revealed, setRevealed] = useState<Partial<Record<KeyType, string>>>(
 		{},
 	);
+	const [rotatedSecret, setRotatedSecret] = useState<string | null>(null);
 
 	async function reveal(type: KeyType) {
 		setBusy(true);
@@ -106,6 +107,26 @@ export function RuntimeKeysCard({
 			router.refresh();
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Revocation failed");
+		} finally {
+			setBusy(false);
+		}
+	}
+
+	async function rotateSecret() {
+		setBusy(true);
+		setError(null);
+
+		try {
+			const result = await request<{ secret: string }>(
+				`/v1/runtimes/${runtimeId}/rotate-secret`,
+				{ method: "POST" },
+			);
+			setRotatedSecret(result.secret);
+			router.refresh();
+		} catch (err) {
+			setError(
+				err instanceof Error ? err.message : "Could not rotate the secret",
+			);
 		} finally {
 			setBusy(false);
 		}
@@ -169,6 +190,50 @@ export function RuntimeKeysCard({
 				onRotate={() => rotate("public")}
 				onRevoke={() => revoke("public")}
 			/>
+
+			<div className="flex flex-wrap items-start justify-between gap-4 rounded-lg border border-console-border bg-white/[0.02] p-4">
+				<div className="min-w-0 space-y-1">
+					<div className="text-sm text-console-fg">Runtime signing secret</div>
+					<p className="text-xs text-console-fg-muted">
+						Shown once, when the runtime was created. Cheela signs every
+						capability request with it and your endpoint verifies that
+						signature. It cannot be read back — rotate to get a new one.
+					</p>
+				</div>
+				<div className="flex shrink-0 gap-2">
+					<Button
+						disabled={busy}
+						onClick={rotateSecret}
+						size="sm"
+						variant="secondary"
+					>
+						Rotate
+					</Button>
+				</div>
+			</div>
+
+			{rotatedSecret ? (
+				<div className="space-y-2 rounded-[16px] border border-accent/40 bg-accent/5 p-4">
+					<div className="flex items-center justify-between gap-3">
+						<div className="text-xs uppercase tracking-wide text-accent">
+							New runtime secret
+						</div>
+						<CopyButton
+							icon
+							label="Copy new runtime secret"
+							value={rotatedSecret}
+						/>
+					</div>
+					<pre className="overflow-x-auto font-mono text-xs text-console-fg">
+						{`CHEELA_RUNTIME_SECRET=${rotatedSecret}`}
+					</pre>
+					<p className="text-xs text-console-fg-muted">
+						There is no grace window — the previous secret stopped working the
+						moment this one was issued. Capability calls will fail until this
+						value is deployed where your endpoint runs.
+					</p>
+				</div>
+			) : null}
 
 			{issued ? (
 				<div className="space-y-2 rounded-[16px] border border-accent/40 bg-accent/5 p-4">

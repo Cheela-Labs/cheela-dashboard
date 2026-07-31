@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { CopyButton } from "@/components/ui/copy-button";
 import { useProjects } from "@/lib/projects";
 import { useCheelaApi } from "@/lib/use-cheela-api";
 
@@ -15,6 +16,7 @@ export function RegisterRuntimeForm() {
 	const [keys, setKeys] = useState<{
 		deployKey: string;
 		publicKey: string;
+		secret: string;
 	} | null>(null);
 	const [runtimeId, setRuntimeId] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
@@ -32,6 +34,7 @@ export function RegisterRuntimeForm() {
 				runtimeId: string;
 				deployKey: string;
 				publicKey: string;
+				secret: string;
 			}>("/v1/runtimes", {
 				method: "POST",
 				// No tier here — it follows the account's subscription, and the
@@ -43,7 +46,11 @@ export function RegisterRuntimeForm() {
 			});
 
 			setRuntimeId(result.runtimeId);
-			setKeys({ deployKey: result.deployKey, publicKey: result.publicKey });
+			setKeys({
+				deployKey: result.deployKey,
+				publicKey: result.publicKey,
+				secret: result.secret,
+			});
 			if (selectedProjectId) {
 				assignRuntime(result.runtimeId, selectedProjectId);
 			}
@@ -64,13 +71,16 @@ export function RegisterRuntimeForm() {
 					Runtime identity ready
 				</h2>
 				<p className="text-sm text-console-fg-muted">
-					Two keys, and they are not interchangeable. Both are shown once — only
-					their hashes are stored.
+					Three credentials, and they are not interchangeable. Copy all of them
+					now — the runtime secret in particular is shown here and nowhere else.
 				</p>
 
 				<div className="space-y-2">
-					<div className="text-sm text-console-fg">
-						Deploy key — keep secret
+					<div className="flex items-center justify-between gap-3">
+						<span className="text-sm text-console-fg">
+							Deploy key — keep secret
+						</span>
+						<CopyButton icon label="Copy deploy key" value={keys.deployKey} />
 					</div>
 					<p className="text-sm text-console-fg-muted">
 						Store as CHEELA_API_KEY in your project .env, reference it from
@@ -82,8 +92,11 @@ export function RegisterRuntimeForm() {
 				</div>
 
 				<div className="space-y-2">
-					<div className="text-sm text-console-fg">
-						Public key — safe to embed
+					<div className="flex items-center justify-between gap-3">
+						<span className="text-sm text-console-fg">
+							Public key — safe to embed
+						</span>
+						<CopyButton icon label="Copy public key" value={keys.publicKey} />
 					</div>
 					<p className="text-sm text-console-fg-muted">
 						This is the one the chat widget uses. It can execute but never
@@ -93,6 +106,24 @@ export function RegisterRuntimeForm() {
 						{keys.publicKey}
 					</pre>
 				</div>
+				<div className="space-y-2">
+					<div className="flex items-center justify-between gap-3">
+						<span className="text-sm text-console-fg">
+							Runtime secret — keep secret
+						</span>
+						<CopyButton icon label="Copy runtime secret" value={keys.secret} />
+					</div>
+					<p className="text-sm text-console-fg-muted">
+						Store as CHEELA_RUNTIME_SECRET where your endpoint runs. Cheela
+						signs every capability request with it, and your endpoint verifies
+						that signature — without it, anyone who learns your endpoint URL can
+						run your capabilities directly.
+					</p>
+					<pre className="overflow-x-auto rounded-[16px] border border-console-border bg-black/50 p-4 font-mono text-xs text-accent">
+						{`CHEELA_RUNTIME_SECRET=${keys.secret}`}
+					</pre>
+				</div>
+
 				<Button
 					onClick={() => {
 						router.push("/runtimes");

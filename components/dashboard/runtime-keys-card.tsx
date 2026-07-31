@@ -176,7 +176,11 @@ export function RuntimeKeysCard({
 						<div className="text-xs uppercase tracking-wide text-accent">
 							New {issued.type} key
 						</div>
-						<CopyButton value={issued.key} />
+						<CopyButton
+							icon
+							label={`Copy new ${issued.type} key`}
+							value={issued.key}
+						/>
 					</div>
 					<pre className="overflow-x-auto font-mono text-xs text-console-fg">
 						{issued.key}
@@ -257,7 +261,11 @@ function KeyRow({
 			<div className="flex shrink-0 gap-2">
 				{revealedKey ? (
 					<>
-						<CopyButton value={revealedKey} />
+						<CopyButton
+							icon
+							label={`Copy ${title.toLowerCase()}`}
+							value={revealedKey}
+						/>
 						<Button disabled={busy} onClick={onHide} size="sm" variant="ghost">
 							Hide
 						</Button>

@@ -107,12 +107,25 @@ export type OwnerUsage = {
 	inputTokens: number;
 	outputTokens: number;
 	/** Ceilings the counts above are measured against. Optional so an older API still renders. */
-	/** `null` for either field means unlimited (enterprise). */
+	/** `null` for a field means unlimited (enterprise). */
 	limits?: {
-		maxExecutionsPerDay: number | null;
-		maxCapabilityCallsPerDay: number | null;
+		maxExecutionsPerHour: number | null;
+		rolloverHours: number;
+		maxRuntimes: number | null;
 	};
-	/** ISO. The usage window is the UTC day. */
+	/**
+	 * What the owner can spend right now.
+	 *
+	 * A token bucket cannot be drawn as "used of limit": what is left is
+	 * `remaining` of `capacity`, and what can be sustained is `refillPerHour`.
+	 * Collapsing them would make this panel disagree with the enforcement.
+	 */
+	quota?: {
+		remaining: number | null;
+		capacity: number | null;
+		refillPerHour: number | null;
+	};
+	/** ISO. The usage window is the hour. */
 	periodStart?: string;
 	periodEnd?: string;
 };

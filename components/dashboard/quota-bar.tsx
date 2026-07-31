@@ -59,7 +59,10 @@ export function QuotaBar({
 
 			{warning ? (
 				<p className="text-xs text-danger">
-					{Math.round(ratio * 100)}% of your daily {label.toLowerCase()} used.
+					{/* Window-agnostic: the quota is an hourly bucket with rollover, so
+					    "daily" was both wrong and un-actionable. */}
+					{Math.round(ratio * 100)}% of your {label.toLowerCase()} allowance
+					used.
 				</p>
 			) : null}
 		</div>

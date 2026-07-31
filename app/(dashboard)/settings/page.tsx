@@ -13,7 +13,7 @@ export const metadata = {
 	title: "Settings",
 };
 
-/** "in 4h" / "in 35m" — the window is the UTC day, which is not obvious from a raw timestamp. */
+/** "in 4h" / "in 35m" — the reporting window is the hour, which is not obvious from a raw timestamp. */
 function formatResetIn(periodEnd: string): string {
 	const remainingMs = new Date(periodEnd).getTime() - Date.now();
 	if (remainingMs <= 0) return "shortly";
@@ -57,14 +57,20 @@ export default async function SettingsPage() {
 			id: "free",
 			name: "Free",
 			priceUsd: 0,
-			features: ["100 executions/day", "Signed HTTPS transport", "Tracing"],
+			features: [
+				"1 runtime",
+				"100 executions/hour",
+				"Signed HTTPS transport",
+				"Tracing",
+			],
 		},
 		{
 			id: "pro",
 			name: "Pro",
-			priceUsd: 49,
+			priceUsd: 50,
 			features: [
-				"10,000 executions/day",
+				"10 runtimes",
+				"2,000 executions/hour",
 				"90-day retention",
 				"Advanced analytics",
 			],
@@ -113,18 +119,37 @@ export default async function SettingsPage() {
 								</span>
 							</div>
 
+							{/* Drawn as spent-of-capacity, because that is what the bucket
+							    enforces. `executions` below is this hour's count, which is a
+							    different (and smaller) number — the bucket spans the whole
+							    rollover window. */}
 							<QuotaBar
-								label="Executions"
-								used={usage.executions}
-								limit={usage.limits?.maxExecutionsPerDay}
-							/>
-							<QuotaBar
-								label="Capability calls"
-								used={usage.capabilityCalls}
-								limit={usage.limits?.maxCapabilityCallsPerDay}
+								label="Execution allowance"
+								used={
+									usage.quota?.capacity != null && usage.quota.remaining != null
+										? usage.quota.capacity - usage.quota.remaining
+										: usage.executions
+								}
+								limit={usage.quota?.capacity}
 							/>
 
 							<dl className="space-y-3 border-t border-console-border pt-4 text-sm">
+								<div className="flex justify-between gap-4">
+									<dt className="text-console-fg-muted">
+										Executions this hour
+									</dt>
+									<dd className="text-console-fg">
+										{formatNumber(usage.executions)}
+									</dd>
+								</div>
+								<div className="flex justify-between gap-4">
+									<dt className="text-console-fg-muted">Capability calls</dt>
+									{/* Metered and shown, never a ceiling: an execution costs one
+									    unit however many capabilities it calls. */}
+									<dd className="text-console-fg">
+										{formatNumber(usage.capabilityCalls)}
+									</dd>
+								</div>
 								<div className="flex justify-between gap-4">
 									<dt className="text-console-fg-muted">Input tokens</dt>
 									<dd className="text-console-fg">
@@ -139,9 +164,18 @@ export default async function SettingsPage() {
 								</div>
 							</dl>
 
-							{usage.periodEnd ? (
+							{usage.quota?.refillPerHour != null ? (
 								<p className="text-xs text-console-fg-muted">
-									Resets {formatResetIn(usage.periodEnd)} (UTC day).
+									Refills at {formatNumber(usage.quota.refillPerHour)}{" "}
+									executions/hour
+									{usage.limits?.rolloverHours
+										? `, banking up to ${usage.limits.rolloverHours}h of unused allowance`
+										: ""}
+									.
+								</p>
+							) : usage.periodEnd ? (
+								<p className="text-xs text-console-fg-muted">
+									Resets {formatResetIn(usage.periodEnd)}.
 								</p>
 							) : null}
 						</div>

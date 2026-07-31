@@ -89,8 +89,8 @@ export async function getUserProfile(
  * enforced as **free**: exactly the multi-store tier drift the server
  * consolidated away.
  *
- * Kept identical to `apps/server/src/users/effective-tier.ts` on purpose. If
- * these ever need to differ, something is wrong with one of them.
+ * Kept identical to `apps/server/src/domain/users/effective-tier.ts` on purpose.
+ * If these ever need to differ, something is wrong with one of them.
  */
 export function effectiveTier(
 	profile: Pick<UserProfile, "tier" | "currentPeriodEnd"> | null,

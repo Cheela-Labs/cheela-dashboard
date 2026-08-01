@@ -9,9 +9,35 @@ import type {
 } from "./types";
 import { normalizeRuntime } from "./types";
 
+/**
+ * Every runtime the owner has, following the cursor.
+ *
+ * `GET /v1/runtimes` is paginated now. Free and Pro cap out at 1 and 10
+ * runtimes so they never reach a second page, but Enterprise has no ceiling —
+ * reading only the first page would silently hide the rest from the very
+ * customers most likely to have them. Bounded so a cursor bug cannot spin
+ * forever.
+ */
+const MAX_RUNTIME_PAGES = 20;
+
 export async function fetchRuntimes() {
-	const data = await apiFetch<{ runtimes: RuntimeSummary[] }>("/v1/runtimes");
-	return data.runtimes.map(normalizeRuntime);
+	const runtimes: RuntimeSummary[] = [];
+	let cursor: string | null = null;
+
+	for (let page = 0; page < MAX_RUNTIME_PAGES; page += 1) {
+		const data: { runtimes: RuntimeSummary[]; nextCursor: string | null } =
+			await apiFetch(
+				cursor
+					? `/v1/runtimes?cursor=${encodeURIComponent(cursor)}`
+					: "/v1/runtimes",
+			);
+
+		runtimes.push(...data.runtimes);
+		cursor = data.nextCursor;
+		if (!cursor) break;
+	}
+
+	return runtimes.map(normalizeRuntime);
 }
 
 export async function fetchRuntime(runtimeId: string) {

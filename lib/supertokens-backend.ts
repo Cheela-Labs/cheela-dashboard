@@ -1,8 +1,10 @@
 import supertokens from "supertokens-node";
 import EmailPassword from "supertokens-node/recipe/emailpassword";
+import EmailVerification from "supertokens-node/recipe/emailverification";
 import Session from "supertokens-node/recipe/session";
 import ThirdParty from "supertokens-node/recipe/thirdparty";
 import type { ProviderInput } from "supertokens-node/recipe/thirdparty/types";
+import { sendEmail, verificationEmail } from "./email";
 import { ensureUserProfile } from "./user-profile";
 
 const connectionURI = process.env.SUPERTOKENS_CONNECTION_URI;
@@ -73,6 +75,34 @@ export function ensureSuperTokensInit(): void {
 			websiteBasePath: "/sign-in",
 		},
 		recipeList: [
+			/**
+			 * Declared before the sign-in recipes so its session claim is added to
+			 * every session they create.
+			 *
+			 * `REQUIRED` rather than `OPTIONAL`: optional adds the claim but
+			 * enforces nothing, which is the same posture as today with more
+			 * moving parts. Required means SuperTokens refuses to hand out a
+			 * usable session until the address is proven.
+			 *
+			 * The address matters because a free account carries 100
+			 * executions/hour that run on Cheela's own OpenRouter credential — so
+			 * an unverified signup is not just a fake row, it is metered spend
+			 * against an identity nobody owns. See the runtime-creation gate in
+			 * apps/server.
+			 */
+			EmailVerification.init({
+				mode: "REQUIRED",
+				emailDelivery: {
+					service: {
+						sendEmail: async (input) => {
+							const { subject, html, text } = verificationEmail(
+								input.emailVerifyLink,
+							);
+							await sendEmail({ to: input.user.email, subject, html, text });
+						},
+					},
+				},
+			}),
 			EmailPassword.init({
 				override: {
 					functions: (original) => ({

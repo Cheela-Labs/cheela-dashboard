@@ -1,5 +1,6 @@
 import SuperTokens from "supertokens-web-js";
 import EmailPassword from "supertokens-web-js/recipe/emailpassword";
+import EmailVerification from "supertokens-web-js/recipe/emailverification";
 import Session from "supertokens-web-js/recipe/session";
 import ThirdParty from "supertokens-web-js/recipe/thirdparty";
 
@@ -20,6 +21,15 @@ export function ensureSuperTokensFrontendInit(): void {
 				window.location.origin,
 			apiBasePath: "/api/auth",
 		},
-		recipeList: [EmailPassword.init(), ThirdParty.init(), Session.init()],
+		// EmailVerification must be present here too, not just on the backend.
+		// Without it the browser has no way to consume a verification link or
+		// re-request one, and the claim the backend now requires can never be
+		// satisfied — sign-in would succeed and then dead-end.
+		recipeList: [
+			EmailVerification.init(),
+			EmailPassword.init(),
+			ThirdParty.init(),
+			Session.init(),
+		],
 	});
 }

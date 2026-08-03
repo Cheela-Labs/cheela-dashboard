@@ -12,6 +12,42 @@ const apiDomain = process.env.SUPERTOKENS_API_DOMAIN ?? "http://localhost:3001";
 const websiteDomain =
 	process.env.SUPERTOKENS_WEBSITE_DOMAIN ?? "http://localhost:3001";
 
+/**
+ * Refuses to email a link nobody outside this machine can open.
+ *
+ * SuperTokens builds the verification link from `appInfo.websiteDomain` —
+ * never from the incoming request — so if `SUPERTOKENS_WEBSITE_DOMAIN` is
+ * unset the link is `http://localhost:3001/...`, and the mail sends
+ * successfully with a dead address inside it. Every signal says it worked:
+ * Resend returns 200, the user receives a message, and the link 404s.
+ *
+ * A local link is legitimate in local development, so the check is scoped to
+ * deployed environments. `VERCEL_ENV` covers preview deployments too, where
+ * the same misconfiguration is just as invisible.
+ */
+function assertReachableLink(link: string): void {
+	const deployed =
+		process.env.VERCEL_ENV === "production" ||
+		process.env.VERCEL_ENV === "preview" ||
+		process.env.NODE_ENV === "production";
+	if (!deployed) return;
+
+	const { hostname } = new URL(link);
+	if (
+		hostname === "localhost" ||
+		hostname === "127.0.0.1" ||
+		hostname === "[::1]"
+	) {
+		throw new Error(
+			`Refusing to email a verification link pointing at ${hostname}. ` +
+				"SUPERTOKENS_WEBSITE_DOMAIN is unset or wrong in this environment — " +
+				"it must be the public origin users reach, e.g. " +
+				"https://dashboard.cheelalabs.com, because SuperTokens builds the " +
+				"link from it rather than from the request.",
+		);
+	}
+}
+
 function thirdPartyProviders(): ProviderInput[] {
 	const providers: ProviderInput[] = [];
 	if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
@@ -95,6 +131,7 @@ export function ensureSuperTokensInit(): void {
 				emailDelivery: {
 					service: {
 						sendEmail: async (input) => {
+							assertReachableLink(input.emailVerifyLink);
 							const { subject, html, text } = verificationEmail(
 								input.emailVerifyLink,
 							);

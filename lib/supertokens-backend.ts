@@ -26,13 +26,38 @@ const websiteDomain =
  * the same misconfiguration is just as invisible.
  */
 function assertReachableLink(link: string): void {
+	const { hostname } = new URL(link);
+
+	/**
+	 * The auth core is not the website.
+	 *
+	 * Checked in every environment, because it is never right anywhere.
+	 * `SUPERTOKENS_CONNECTION_URI` is the core service — a Java process that
+	 * answers `/hello` and knows nothing about this app's routes — while
+	 * `SUPERTOKENS_WEBSITE_DOMAIN` is where *users* are. The names are similar
+	 * enough that putting the core's URL in both is an easy mistake, and the
+	 * symptom is a verification link that 404s on a host that is otherwise
+	 * healthy, which looks like a routing bug rather than a config one.
+	 */
+	if (connectionURI && hostname === new URL(connectionURI).hostname) {
+		throw new Error(
+			`Refusing to email a verification link pointing at ${hostname}, which is ` +
+				"the SuperTokens core, not this website. SUPERTOKENS_WEBSITE_DOMAIN has " +
+				"been set to the value that belongs in SUPERTOKENS_CONNECTION_URI. It " +
+				"must be the origin users open in a browser, e.g. " +
+				"https://dashboard.cheelalabs.com.",
+		);
+	}
+
+	// A loopback link is correct in local development and useless anywhere
+	// else, so this half is scoped to deployed environments. VERCEL_ENV covers
+	// previews, where the same mistake is just as invisible.
 	const deployed =
 		process.env.VERCEL_ENV === "production" ||
 		process.env.VERCEL_ENV === "preview" ||
 		process.env.NODE_ENV === "production";
 	if (!deployed) return;
 
-	const { hostname } = new URL(link);
 	if (
 		hostname === "localhost" ||
 		hostname === "127.0.0.1" ||

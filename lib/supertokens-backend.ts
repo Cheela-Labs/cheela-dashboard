@@ -1,4 +1,5 @@
 import supertokens from "supertokens-node";
+import AccountLinking from "supertokens-node/recipe/accountlinking";
 import EmailPassword from "supertokens-node/recipe/emailpassword";
 import EmailVerification from "supertokens-node/recipe/emailverification";
 import Session from "supertokens-node/recipe/session";
@@ -151,6 +152,65 @@ export function ensureSuperTokensInit(): void {
 			 * against an identity nobody owns. See the runtime-creation gate in
 			 * apps/server.
 			 */
+			/**
+			 * One person, one account, whichever door they came through.
+			 *
+			 * Without this, signing up with a password and later clicking
+			 * "Continue with Google" produced two users with different ids — two
+			 * profiles, two sets of runtimes, and a dashboard that looked wiped.
+			 *
+			 * `shouldRequireVerification: true` is the entire security of this
+			 * feature and must not be relaxed. It is what stops someone
+			 * registering `you@company.com` with a password and being merged into
+			 * your Google account the moment you sign in. With it, an unverified
+			 * account never links: it stays separate until its own address is
+			 * proven, at which point the person holding the inbox is by
+			 * definition the same person.
+			 *
+			 * This is why it ships *after* EmailVerification and not with it.
+			 * Automatic linking on an unverified address is a takeover primitive,
+			 * and SuperTokens' own guidance is the same.
+			 *
+			 * Third-party sign-ins carry the provider's verified flag — Google and
+			 * GitHub both assert it — so those link on first use without a second
+			 * round trip.
+			 */
+			AccountLinking.init({
+				shouldDoAutomaticAccountLinking: async () => ({
+					shouldAutomaticallyLink: true,
+					shouldRequireVerification: true,
+				}),
+
+				/**
+				 * Linking is not free: one of the two ids stops being anybody's
+				 * `session.getUserId()`.
+				 *
+				 * Runtimes, quota and traces are all keyed on that id as `ownerId`
+				 * in apps/server. If somebody had already built on both accounts
+				 * before they were linked, whatever sat under the absorbed id is
+				 * still in the database and no longer reachable through the UI.
+				 *
+				 * Nothing is migrated here on purpose — moving another account's
+				 * runtimes automatically is a worse failure than leaving them, and
+				 * it cannot be undone. This records enough to reconcile by hand,
+				 * which for a product at this stage is the right trade.
+				 */
+				onAccountLinked: async (user, newAccountInfo) => {
+					const absorbed = newAccountInfo.recipeUserId.getAsString();
+					if (absorbed !== user.id) {
+						console.info(
+							JSON.stringify({
+								event: "account_linked",
+								primaryUserId: user.id,
+								absorbedRecipeUserId: absorbed,
+								email: newAccountInfo.email,
+								note: "Anything owned by absorbedRecipeUserId in the server's data is now unreachable via the UI.",
+							}),
+						);
+					}
+					await ensureUserProfile(user.id, user.emails[0] ?? "");
+				},
+			}),
 			EmailVerification.init({
 				mode: "REQUIRED",
 				emailDelivery: {

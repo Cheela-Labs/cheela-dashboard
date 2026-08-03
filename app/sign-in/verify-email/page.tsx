@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import EmailVerification from "supertokens-web-js/recipe/emailverification";
 import { ensureSuperTokensFrontendInit } from "@/lib/supertokens-frontend";
 
@@ -19,20 +19,61 @@ type State =
 	| { kind: "working" }
 	| { kind: "verified" }
 	| { kind: "expired" }
-	| { kind: "prompt" }
 	| { kind: "sent" }
+	/** Sending needs a session, so "not signed in" is a real arrival here. */
+	| { kind: "signedOut" }
 	| { kind: "failed"; message: string };
 
 export default function VerifyEmailPage() {
 	const [state, setState] = useState<State>({ kind: "working" });
+	const started = useRef(false);
+
+	// Declared before the effect that calls it. Hoisting is not the point —
+	// the effect runs after render either way — but reading it in the order it
+	// executes is.
+	const resend = useCallback(async () => {
+		setState({ kind: "working" });
+		try {
+			const response = await EmailVerification.sendVerificationEmail();
+			setState(
+				response.status === "EMAIL_ALREADY_VERIFIED_ERROR"
+					? { kind: "verified" }
+					: { kind: "sent" },
+			);
+		} catch (error) {
+			// Sending requires a session. Somebody who opened this URL directly,
+			// or whose session expired while the tab sat open, gets told to sign
+			// in rather than shown a raw 401 they can do nothing with.
+			const message =
+				error instanceof Error ? error.message : "Could not send the email.";
+			setState(
+				/unauthor|session/i.test(message)
+					? { kind: "signedOut" }
+					: { kind: "failed", message },
+			);
+		}
+	}, []);
 
 	useEffect(() => {
 		ensureSuperTokensFrontendInit();
 
-		// No token means the visitor arrived from the middleware rather than from
-		// the email — they need a prompt, not a verification attempt.
+		// StrictMode runs effects twice in development. Without this the page
+		// requests two verification emails on every mount, and the first token is
+		// invalidated by the second — so the link in the earlier email is dead on
+		// arrival, which looks exactly like a broken sender.
+		if (started.current) return;
+		started.current = true;
+
+		// No token means the visitor came from the middleware, not the email.
+		//
+		// Send now, rather than waiting for a click. Nothing else in this app
+		// ever sends: SuperTokens only mails on an explicit call to
+		// `/user/email/verify/token`, and sign-up does not make one. The
+		// pre-built auth-react UI would have; supertokens-web-js is headless, so
+		// this page is the only thing that can, and if it waits for a button then
+		// verification silently never happens.
 		if (EmailVerification.getEmailVerificationTokenFromURL() === "") {
-			setState({ kind: "prompt" });
+			void resend();
 			return;
 		}
 
@@ -55,25 +96,10 @@ export default function VerifyEmailPage() {
 				});
 			}
 		})();
-	}, []);
-
-	const resend = useCallback(async () => {
-		setState({ kind: "working" });
-		try {
-			const response = await EmailVerification.sendVerificationEmail();
-			setState(
-				response.status === "EMAIL_ALREADY_VERIFIED_ERROR"
-					? { kind: "verified" }
-					: { kind: "sent" },
-			);
-		} catch (error) {
-			setState({
-				kind: "failed",
-				message:
-					error instanceof Error ? error.message : "Could not send the email.",
-			});
-		}
-	}, []);
+		// `resend` is a useCallback with no dependencies, so it is stable for the
+		// life of the component and listing it cannot cause a re-run. The
+		// `started` guard above is what actually keeps this to one execution.
+	}, [resend]);
 
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-console-bg px-6">
@@ -99,22 +125,24 @@ function Body({ state, onResend }: { state: State; onResend: () => void }) {
 				</Message>
 			);
 
-		case "prompt":
-			return (
-				<Message
-					title="Verify your email"
-					detail="We sent you a link when you signed up. Open it to finish setting up your account — a runtime cannot be created until the address is confirmed."
-				>
-					<Action onClick={onResend}>Send it again</Action>
-				</Message>
-			);
-
 		case "sent":
 			return (
 				<Message
 					title="Check your inbox"
-					detail="A new link is on its way. It expires after a while, so use it soon."
-				/>
+					detail="We've sent you a link. Open it to finish setting up your account — a runtime cannot be created until the address is confirmed."
+				>
+					<Action onClick={onResend}>Send another</Action>
+				</Message>
+			);
+
+		case "signedOut":
+			return (
+				<Message
+					title="Sign in first"
+					detail="We can only send a verification link to a signed-in account."
+				>
+					<Action href="/sign-in">Go to sign in</Action>
+				</Message>
 			);
 
 		case "expired":

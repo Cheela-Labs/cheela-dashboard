@@ -101,6 +101,36 @@ export async function middleware(request: NextRequest) {
 						: redirectTo(request, "/sign-in");
 				}
 
+				/**
+				 * The session is valid; a claim on it is not.
+				 *
+				 * In practice this is only ever `st-ev` — EmailVerification runs in
+				 * REQUIRED mode, so it attaches a validator that every
+				 * session-protected route enforces. Without this branch the error
+				 * fell through to `throw` and the visitor got SuperTokens' raw
+				 * `{"message":"invalid claim"}` JSON: signed in, session issued,
+				 * and no way to act on it.
+				 *
+				 * A 403 rather than a 401 for API callers, because retrying with a
+				 * fresh token will not help — the address has to be confirmed.
+				 */
+				if (
+					SessionError.isErrorFromSuperTokens(error) &&
+					error.type === SessionError.INVALID_CLAIMS
+				) {
+					return isApiRoute
+						? NextResponse.json(
+								{
+									error: {
+										message: "Verify your email address to continue.",
+										code: "email_not_verified",
+									},
+								},
+								{ status: 403 },
+							)
+						: redirectTo(request, "/sign-in/verify-email");
+				}
+
 				throw error;
 			}
 		},

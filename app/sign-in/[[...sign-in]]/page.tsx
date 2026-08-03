@@ -1,3 +1,18 @@
+import type { Metadata } from "next";
+
+/**
+ * The one page here a crawler can actually reach.
+ *
+ * `robots.ts` disallows the whole host, but a disallowed URL can still be
+ * indexed from an external link — Google will list it without crawling it.
+ * `noindex` is what removes it, and it is only seen because this route returns
+ * 200 rather than redirecting.
+ */
+export const metadata: Metadata = {
+	title: "Sign in",
+	robots: { index: false, follow: false },
+};
+
 import { AuthForm } from "@/components/auth/auth-form";
 
 export default function SignInPage() {

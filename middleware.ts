@@ -110,7 +110,12 @@ export async function middleware(request: NextRequest) {
 export const config = {
 	runtime: "nodejs",
 	matcher: [
-		"/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+		// `txt` and `xml` are in this list so `/robots.txt` and `/sitemap.xml`
+		// are served rather than intercepted. Without them the auth middleware
+		// 307s `/robots.txt` to `/sign-in`, and a crawler asking for crawl rules
+		// receives an HTML login form — which it treats as "no rules", the exact
+		// opposite of what the file says.
+		"/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest|txt|xml)).*)",
 		"/(api|trpc)(.*)",
 	],
 };

@@ -28,8 +28,25 @@ export default function OAuthCallbackPage() {
 					return;
 				}
 				setError(response.reason);
-			} catch {
-				if (!cancelled) setError("Something went wrong — try again");
+			} catch (caught) {
+				if (cancelled) return;
+
+				// The thrown message, not a generic one.
+				//
+				// `signInAndUp` returns a status for anything it anticipates, so
+				// reaching here means the backend failed outright. Replacing that
+				// with "something went wrong" discards the only description of what
+				// broke and leaves the browser console as the sole copy — which is
+				// exactly what happened when account linking was enabled and this
+				// page reported nothing useful about why.
+				const detail =
+					caught instanceof Error ? caught.message : String(caught);
+				console.error("Third-party sign-in failed", caught);
+				setError(
+					detail
+						? `Sign-in failed: ${detail}`
+						: "Sign-in failed, and the server gave no reason. Check the dashboard's function logs.",
+				);
 			}
 		}
 

@@ -23,6 +23,7 @@ import {
 	fetchExecutions,
 	fetchRuntimes,
 } from "@/lib/live-data";
+import { PRO_PRICE_MONTHLY_LABEL } from "@/lib/pricing";
 import { formatDuration, formatNumber } from "@/lib/utils";
 
 export default async function OverviewPage() {
@@ -246,7 +247,10 @@ export default async function OverviewPage() {
 							<div className="mt-4 space-y-2 break-all">
 								<div>API {getApiUrl()}</div>
 								<div>Auth SuperTokens session → server</div>
-								<div>Billing Pro $49/mo (USD · Razorpay INR checkout)</div>
+								<div>
+									Billing Pro {PRO_PRICE_MONTHLY_LABEL} (USD · Razorpay INR
+									checkout)
+								</div>
 							</div>
 						</div>
 					</div>

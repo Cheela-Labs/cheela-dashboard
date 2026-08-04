@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { PRO_PRICE_LABEL } from "@/lib/pricing";
 import { useCheelaApi } from "@/lib/use-cheela-api";
 
 declare global {
@@ -134,7 +135,7 @@ export function UpgradeButton({
 	return (
 		<div className="space-y-3">
 			<Button onClick={handleUpgrade} disabled={loading}>
-				{loading ? "Opening checkout…" : "Upgrade to Pro — $49"}
+				{loading ? "Opening checkout…" : `Upgrade to Pro — ${PRO_PRICE_LABEL}`}
 			</Button>
 			{message ? (
 				<p className="text-sm text-console-fg-muted">{message}</p>

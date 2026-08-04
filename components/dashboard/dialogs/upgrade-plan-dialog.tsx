@@ -8,6 +8,7 @@ import {
 	DialogHeader,
 	DialogTrigger,
 } from "@/components/ui/dialog";
+import { PRO_PRICE_LABEL } from "@/lib/pricing";
 
 const FEATURES = [
 	"10 runtimes",
@@ -31,7 +32,7 @@ export function UpgradePlanDialog({
 			<DialogContent className="max-w-[420px]">
 				<DialogHeader eyebrow="UPGRADE" title="Cheela Cloud Pro" />
 				<div className="mb-6 font-display text-2xl font-bold text-console-fg">
-					$49
+					{PRO_PRICE_LABEL}
 					<span className="text-sm font-normal text-console-fg-muted">/mo</span>
 				</div>
 				<div className="mb-8 flex flex-col gap-3">

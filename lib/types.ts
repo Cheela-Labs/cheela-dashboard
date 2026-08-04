@@ -46,8 +46,18 @@ export type ExecutionSummary = {
 	capabilityCalls: number;
 	startedAt: string;
 	completedAt?: string;
-	preview: string;
 	error?: string;
+};
+
+/**
+ * One turn of an execution with its content removed — what the server stores
+ * in place of the conversation. `parts` holds part *types* in order, so a run
+ * can be read as user → assistant → tool without anything anybody wrote being
+ * available to read.
+ */
+export type MessageShape = {
+	role: "system" | "user" | "assistant" | "tool";
+	parts: string[];
 };
 
 export type AnalyticsBucket = "hour" | "day";
@@ -141,7 +151,7 @@ export type TraceCapabilityCall = {
 };
 
 export type ExecutionDetail = ExecutionSummary & {
-	messages?: unknown[];
+	messageShape?: MessageShape[];
 	capabilityCallsDetail?: TraceCapabilityCall[];
 	inputTokens?: number;
 	outputTokens?: number;

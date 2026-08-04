@@ -30,12 +30,15 @@ export function ExecutionsTable({
 						href={`/executions/${execution.executionId}`}
 						className="grid gap-3 px-5 py-4 transition hover:bg-white/[0.02] md:grid-cols-[1.2fr_1fr_0.7fr_0.7fr_0.7fr] md:items-center md:gap-4"
 					>
+						{/*
+						  This cell used to carry a second line with the first 160
+						  characters of the end user's message. It was the only place in
+						  the product that displayed what somebody typed, and the server
+						  no longer stores it.
+						*/}
 						<div className="min-w-0">
 							<div className="truncate font-mono text-sm text-console-fg">
 								{execution.executionId}
-							</div>
-							<div className="mt-1 truncate text-sm text-console-fg-muted">
-								{execution.preview}
 							</div>
 						</div>
 						<div className="truncate font-mono text-sm text-console-fg-muted">

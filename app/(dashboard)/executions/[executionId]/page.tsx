@@ -22,6 +22,7 @@ export default async function ExecutionDetailPage({
 	}
 
 	const calls = execution.capabilityCallsDetail ?? [];
+	const turns = execution.messageShape ?? [];
 
 	return (
 		<div className="space-y-10">
@@ -29,7 +30,6 @@ export default async function ExecutionDetailPage({
 				<PageHeader
 					eyebrow="Trace"
 					title={execution.executionId}
-					description={execution.preview}
 					actions={
 						<>
 							<Badge
@@ -77,6 +77,17 @@ export default async function ExecutionDetailPage({
 								<dt className="text-console-fg-muted">Capability calls</dt>
 								<dd className="text-console-fg">{execution.capabilityCalls}</dd>
 							</div>
+							{/*
+							  Turn count comes from `messageShape`, the content-free record
+							  the server keeps in place of the conversation. Absent on traces
+							  written before that field existed.
+							*/}
+							{turns.length > 0 ? (
+								<div className="flex justify-between gap-4 border-b border-console-border pb-3">
+									<dt className="text-console-fg-muted">Turns</dt>
+									<dd className="text-console-fg">{turns.length}</dd>
+								</div>
+							) : null}
 							<div className="flex justify-between gap-4">
 								<dt className="text-console-fg-muted">Started</dt>
 								<dd className="text-console-fg">
@@ -99,7 +110,7 @@ export default async function ExecutionDetailPage({
 									<div className="absolute left-3 top-1/2 size-3 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_0_6px] shadow-accent/15" />
 									<div className="text-sm text-console-fg">User message</div>
 									<div className="mt-1 text-xs text-console-fg-muted">
-										{execution.preview}
+										Content is not stored
 									</div>
 								</div>
 								{calls.map((call, index) => (

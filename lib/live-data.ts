@@ -3,6 +3,7 @@ import type {
 	AnalyticsSummary,
 	ExecutionDetail,
 	ExecutionSummary,
+	MessageShape,
 	OwnerUsage,
 	RuntimeSummary,
 	TraceCapabilityCall,
@@ -56,7 +57,7 @@ export async function fetchExecution(executionId: string) {
 	const data = await apiFetch<
 		ExecutionSummary & {
 			capabilityCalls?: number | TraceCapabilityCall[];
-			messages?: unknown[];
+			messageShape?: MessageShape[];
 			inputTokens?: number;
 			outputTokens?: number;
 			totalTokens?: number;
@@ -76,13 +77,12 @@ export async function fetchExecution(executionId: string) {
 		durationMs: data.durationMs,
 		startedAt: data.startedAt,
 		completedAt: data.completedAt,
-		preview: data.preview,
 		error: data.error,
 		capabilityCalls: Array.isArray(data.capabilityCalls)
 			? data.capabilityCalls.length
 			: (data.capabilityCalls ?? 0),
 		capabilityCallsDetail: detailCalls,
-		messages: data.messages,
+		messageShape: data.messageShape,
 		inputTokens: data.inputTokens,
 		outputTokens: data.outputTokens,
 		totalTokens: data.totalTokens,

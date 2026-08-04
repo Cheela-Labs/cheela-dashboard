@@ -301,7 +301,11 @@ export default async function AnalyticsPage({
 													>
 														{execution.status}
 													</span>{" "}
-													{execution.preview}
+													{/* Was the message preview. The ID is the part a
+													    reader can act on anyway — it opens the trace. */}
+													<span className="font-mono text-xs">
+														{execution.executionId}
+													</span>
 												</span>
 												<span className="shrink-0 text-console-fg-muted">
 													{formatRelativeTime(execution.startedAt)}

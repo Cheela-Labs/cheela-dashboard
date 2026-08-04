@@ -1,12 +1,4 @@
-import {
-	Activity,
-	AlertTriangle,
-	Boxes,
-	Clock3,
-	Coins,
-	Download,
-	Plus,
-} from "lucide-react";
+import { Activity, Boxes, Clock3, Coins, Download, Plus } from "lucide-react";
 import { ExportDownloadDialog } from "@/components/dashboard/dialogs/export-download-dialog";
 import { RegisterRuntimeDialog } from "@/components/dashboard/dialogs/register-runtime-dialog";
 import { ExecutionsTable } from "@/components/dashboard/executions-table";
@@ -23,7 +15,6 @@ import {
 	fetchExecutions,
 	fetchRuntimes,
 } from "@/lib/live-data";
-import { PRO_PRICE_MONTHLY_LABEL } from "@/lib/pricing";
 import { formatDuration, formatNumber } from "@/lib/utils";
 
 export default async function OverviewPage() {
@@ -224,38 +215,6 @@ export default async function OverviewPage() {
 					</section>
 				</FadeIn>
 			</div>
-
-			<FadeIn delay={0.2}>
-				<Card className="p-0">
-					<div className="grid gap-6 p-6 sm:p-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-						<div className="space-y-4">
-							<div className="inline-flex items-center gap-2 rounded-pill border border-accent/30 bg-accent/10 px-3 py-1 font-mono text-2xs tracking-wide text-accent">
-								<AlertTriangle className="size-3.5" />
-								Live
-							</div>
-							<h2 className="font-display text-2xl font-semibold tracking-tight text-console-fg sm:text-3xl">
-								Connected to Cheela Cloud
-							</h2>
-							<p className="max-w-xl text-md leading-relaxed text-console-fg-muted">
-								This dashboard authenticates with SuperTokens and reads live
-								registry, execution, analytics, and billing data from your
-								deployed API.
-							</p>
-						</div>
-						<div className="rounded-lg border border-console-border bg-black/40 p-5 font-mono text-sm text-console-fg-muted">
-							<div className="text-accent">Connection</div>
-							<div className="mt-4 space-y-2 break-all">
-								<div>API {getApiUrl()}</div>
-								<div>Auth SuperTokens session → server</div>
-								<div>
-									Billing Pro {PRO_PRICE_MONTHLY_LABEL} (USD · Razorpay INR
-									checkout)
-								</div>
-							</div>
-						</div>
-					</div>
-				</Card>
-			</FadeIn>
 		</div>
 	);
 }

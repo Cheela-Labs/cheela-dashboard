@@ -1,231 +1,140 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { Bell } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { UserMenu } from "@/components/layout/user-menu";
 import { Button } from "@/components/ui/button";
 import { useProjects } from "@/lib/projects";
 import { useCheelaApi } from "@/lib/use-cheela-api";
 
-const PAGES = [
-	{ href: "/", label: "Overview", keywords: ["home", "dashboard"] },
-	{ href: "/runtimes", label: "Runtimes", keywords: ["runtime", "registry"] },
-	{
-		href: "/runtimes/new",
-		label: "Create Runtime",
-		keywords: ["register", "new runtime"],
-	},
-	{
-		href: "/executions",
-		label: "Executions",
-		keywords: ["traces", "runs"],
-	},
-	{ href: "/analytics", label: "Analytics", keywords: ["metrics", "usage"] },
-	{ href: "/settings", label: "Settings", keywords: ["billing", "limits"] },
-	{
-		href: "/workspace",
-		label: "Workspace",
-		keywords: ["projects", "project"],
-	},
-] as const;
+/**
+ * The control-room header, per `Dashboard.dc.html`.
+ *
+ * The search field, its ⌘K shortcut and its combobox listbox were removed
+ * rather than restyled: the design's header has no search at all, and the
+ * instruction was to adopt it exactly. Every destination the search reached is
+ * still in the sidebar, so nothing is stranded — but this was a real
+ * capability, not decoration, and bringing it back means bringing back the
+ * `role="combobox"` wiring with it, not just an input.
+ */
 
-type SearchResult = {
-	id: string;
-	href: string;
-	label: string;
-	group: "Pages" | "Projects" | "Runtimes";
-};
+type Stat = { label: string; value: string };
 
-function matches(query: string, ...parts: string[]) {
-	const q = query.trim().toLowerCase();
-	if (!q) return false;
-	return parts.some((part) => part.toLowerCase().includes(q));
+/** `48,204` — separated, because these sit in a 12px mono row. */
+function formatCount(value: number): string {
+	return value.toLocaleString("en-US");
+}
+
+/** `212ms` under a second, `1.4s` over it. */
+function formatLatency(ms: number): string {
+	if (!Number.isFinite(ms) || ms <= 0) return "—";
+	return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(1)}s`;
 }
 
 export function Topbar({ title }: { title?: string }) {
-	const router = useRouter();
 	const { request } = useCheelaApi();
-	const { projects, selectProject, selectedProject } = useProjects();
-	const inputRef = useRef<HTMLInputElement>(null);
-	const listId = useId();
-	const [query, setQuery] = useState("");
-	const [open, setOpen] = useState(false);
-	const [runtimes, setRuntimes] = useState<
-		Array<{ runtimeId: string; provider?: string; model?: string }>
-	>([]);
+	const { selectedProject } = useProjects();
+	const [stats, setStats] = useState<Stat[] | null>(null);
 
-	const loadRuntimes = useRef(async () => {
+	// In a ref so the effect below does not depend on a function identity that
+	// changes on every render.
+	const load = useRef(async () => {
 		try {
-			const data = await request<{
-				runtimes: Array<{
-					runtimeId: string;
-					provider?: string | { provider: string };
-					model?: string;
-				}>;
-			}>("/v1/runtimes");
-			setRuntimes(
-				data.runtimes.map((runtime) => ({
-					runtimeId: runtime.runtimeId,
-					provider:
-						typeof runtime.provider === "string"
-							? runtime.provider
-							: runtime.provider?.provider,
-					model: runtime.model,
-				})),
-			);
+			const [runtimes, analytics] = await Promise.all([
+				request<{ runtimes: unknown[] }>("/v1/runtimes"),
+				request<{
+					requests: number;
+					failed: number;
+					averageLatencyMs: number;
+				}>("/v1/analytics/summary"),
+			]);
+
+			/**
+			 * Four stats, each a number the API actually returned.
+			 *
+			 * The design's sample data reads RUNTIMES / REQ/HR / AVG LATENCY 212ms
+			 * / UPTIME 99.98%. The last two are the invented figures already
+			 * removed from the marketing site: nothing in this product measures
+			 * uptime, and a placeholder rendered here is worse than one in a
+			 * mockup, because a user reads it as their own live number.
+			 *
+			 * The four-column shape is kept and the last slot carries `failed`,
+			 * which is real, arrives on the same response, and is worth a glance.
+			 */
+			setStats([
+				{ label: "RUNTIMES", value: formatCount(runtimes.runtimes.length) },
+				{ label: "REQUESTS", value: formatCount(analytics.requests) },
+				{
+					label: "AVG LATENCY",
+					value: formatLatency(analytics.averageLatencyMs),
+				},
+				{ label: "FAILED", value: formatCount(analytics.failed) },
+			]);
 		} catch {
-			setRuntimes([]);
+			// Null, not zeroes. A failed fetch rendering "0 REQUESTS" is a false
+			// statement about the workspace; an absent row is merely quiet.
+			setStats(null);
 		}
 	});
 
 	useEffect(() => {
-		void loadRuntimes.current();
+		void load.current();
 	}, []);
-
-	useEffect(() => {
-		function onKeyDown(event: KeyboardEvent) {
-			if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-				event.preventDefault();
-				inputRef.current?.focus();
-				setOpen(true);
-			}
-			if (event.key === "Escape") {
-				setOpen(false);
-				inputRef.current?.blur();
-			}
-		}
-		window.addEventListener("keydown", onKeyDown);
-		return () => window.removeEventListener("keydown", onKeyDown);
-	}, []);
-
-	const results = useMemo(() => {
-		const q = query.trim();
-		if (!q) return [] as SearchResult[];
-
-		const pageResults: SearchResult[] = PAGES.filter((page) =>
-			matches(q, page.label, page.href, ...page.keywords),
-		).map((page) => ({
-			id: `page:${page.href}`,
-			href: page.href,
-			label: page.label,
-			group: "Pages",
-		}));
-
-		const projectResults: SearchResult[] = projects
-			.filter((project) => matches(q, project.name, project.id))
-			.map((project) => ({
-				id: `project:${project.id}`,
-				href: `/workspace?project=${project.id}`,
-				label: project.name,
-				group: "Projects",
-			}));
-
-		const runtimeResults: SearchResult[] = runtimes
-			.filter((runtime) =>
-				matches(
-					q,
-					runtime.runtimeId,
-					runtime.provider ?? "",
-					runtime.model ?? "",
-				),
-			)
-			.map((runtime) => ({
-				id: `runtime:${runtime.runtimeId}`,
-				href: `/runtimes/${runtime.runtimeId}`,
-				label: runtime.runtimeId,
-				group: "Runtimes",
-			}));
-
-		return [...projectResults, ...runtimeResults, ...pageResults].slice(0, 12);
-	}, [projects, query, runtimes]);
-
-	function navigateTo(result: SearchResult) {
-		if (result.group === "Projects") {
-			const projectId = result.id.replace("project:", "");
-			selectProject(projectId);
-			router.push("/workspace");
-		} else {
-			router.push(result.href);
-		}
-		setQuery("");
-		setOpen(false);
-	}
 
 	return (
 		<header className="sticky top-0 z-20 border-b border-console-border bg-console-bg/80 backdrop-blur-2xl">
-			<div className="flex items-center justify-between gap-4 px-6 py-4 sm:px-8 lg:pl-8">
+			<div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 px-6 py-4 sm:px-8 lg:pl-8">
 				<div className="pl-12 lg:pl-0">
-					<div className="text-2xs tracking-wide text-console-fg-muted">
-						DASHBOARD
-					</div>
-					<div className="mt-1 text-sm font-medium text-console-fg">
+					<div className="font-mono text-sm font-semibold uppercase tracking-wide text-console-fg">
 						{title ?? selectedProject.name}
+					</div>
+					<div className="mt-0.5 text-2xs tracking-wide text-console-fg-muted">
+						CONTROL ROOM
 					</div>
 				</div>
 
-				<div className="flex items-center gap-3">
-					<div className="relative hidden md:block">
-						<div className="flex items-center gap-2 rounded-md border border-console-border bg-white/[0.02] px-4 py-2 text-sm text-console-fg-muted">
-							<Search className="size-4 shrink-0" />
-							<input
-								ref={inputRef}
-								value={query}
-								onChange={(event) => {
-									setQuery(event.target.value);
-									setOpen(true);
-								}}
-								onFocus={() => setOpen(true)}
-								onBlur={() => {
-									window.setTimeout(() => setOpen(false), 150);
-								}}
-								placeholder="Search projects, runtimes, pages…"
-								className="w-56 bg-transparent text-sm text-console-fg outline-none placeholder:text-console-fg-muted lg:w-72"
-								aria-autocomplete="list"
-								aria-controls={listId}
-								aria-expanded={open && results.length > 0}
-								role="combobox"
-							/>
-							<kbd className="ml-2 rounded-sm border border-console-border px-1.5 py-0.5 text-2xs text-console-fg/50">
-								⌘K
-							</kbd>
-						</div>
-
-						{open && query.trim() ? (
-							<div
-								id={listId}
-								role="listbox"
-								className="absolute right-0 z-30 mt-2 w-[min(100vw-2rem,24rem)] overflow-hidden rounded-lg border border-console-border bg-ink-1 shadow-lg"
-							>
-								{results.length === 0 ? (
-									<div className="px-4 py-3 text-sm text-console-fg-muted">
-										No matches
+				<div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+					{/* Hidden below lg: four mono columns plus the account controls do
+					    not fit beside a title on a laptop, and the same figures are on
+					    the Overview and Analytics pages. */}
+					{stats ? (
+						<div className="hidden items-center gap-8 lg:flex">
+							{stats.map((stat) => (
+								<div key={stat.label}>
+									<div className="font-mono text-2xs tracking-wide text-console-fg-muted">
+										{stat.label}
 									</div>
-								) : (
-									<ul className="max-h-80 overflow-y-auto py-1">
-										{results.map((result) => (
-											<li key={result.id}>
-												<button
-													type="button"
-													role="option"
-													className="flex w-full items-center justify-between gap-3 px-4 py-2.5 text-left text-sm transition-colors hover:bg-white/[0.04]"
-													onMouseDown={(event) => event.preventDefault()}
-													onClick={() => navigateTo(result)}
-												>
-													<span className="truncate text-console-fg">
-														{result.label}
-													</span>
-													<span className="shrink-0 text-2xs tracking-wide text-console-fg-muted">
-														{result.group}
-													</span>
-												</button>
-											</li>
-										))}
-									</ul>
-								)}
-							</div>
-						) : null}
+									<div className="mt-0.5 font-mono text-sm font-medium text-console-fg">
+										{stat.value}
+									</div>
+								</div>
+							))}
+						</div>
+					) : null}
+
+					{/*
+					  The dot means the control plane answered, not that anything is
+					  guaranteed up. The design lights it unconditionally; tying it to
+					  the fetch is the difference between an indicator and a graphic.
+					*/}
+					<div className="hidden items-center gap-1.5 sm:flex">
+						<span
+							aria-hidden="true"
+							className={
+								stats
+									? "size-2 rounded-full bg-success shadow-[0_0_0_3px_rgba(31,139,76,0.18)]"
+									: "size-2 rounded-full bg-console-fg-muted"
+							}
+						/>
+						<span
+							className={`font-mono text-2xs tracking-wide ${
+								stats ? "text-success" : "text-console-fg-muted"
+							}`}
+						>
+							{stats ? "LIVE" : "OFFLINE"}
+						</span>
 					</div>
+
 					<Button variant="ghost" size="sm" aria-label="Notifications">
 						<Bell className="size-4" />
 					</Button>

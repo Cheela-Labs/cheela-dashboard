@@ -98,6 +98,25 @@ export function AuthForm({ mode }: { mode: Mode }) {
 				</Button>
 			</div>
 
+			{/*
+			  Each method is its own account.
+
+			  Automatic account linking is a paid SuperTokens feature, so signing
+			  up with a password and later choosing Google produces two users with
+			  different ids — two profiles, two sets of runtimes, and a dashboard
+			  that reads as wiped. One sentence here is the whole mitigation until
+			  linking is licensed, and it costs nothing.
+
+			  Shown on sign-in rather than sign-up, because that is where the
+			  mistake is actually made: nobody signs up twice on purpose.
+			*/}
+			{mode === "sign-in" ? (
+				<p className="text-2xs leading-relaxed text-console-fg-muted">
+					Use the same method you signed up with — Google, GitHub and email are
+					separate accounts.
+				</p>
+			) : null}
+
 			<div className="flex items-center gap-3 text-2xs uppercase tracking-wide text-console-fg-muted">
 				<div className="h-px flex-1 bg-console-border" />
 				or continue with email

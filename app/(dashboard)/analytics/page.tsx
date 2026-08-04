@@ -1,20 +1,17 @@
-import {
-	Activity,
-	AlertTriangle,
-	Clock3,
-	Coins,
-	Waypoints,
-} from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import { AnalyticsRangePicker } from "@/components/dashboard/analytics-range-picker";
-import { CapabilityBars } from "@/components/dashboard/capability-bars";
 import { RequestsTimeseries } from "@/components/dashboard/requests-timeseries";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MetricCard } from "@/components/ui/metric-card";
 import { PageHeader } from "@/components/ui/page-header";
-import { fetchAnalytics } from "@/lib/live-data";
-import { formatDuration, formatNumber } from "@/lib/utils";
+import {
+	fetchAnalytics,
+	fetchExecutions,
+	fetchRuntimes,
+	fetchUsage,
+} from "@/lib/live-data";
+import { formatDuration, formatNumber, formatRelativeTime } from "@/lib/utils";
 
 export const metadata = {
 	title: "Analytics",
@@ -22,6 +19,11 @@ export const metadata = {
 
 function first(value: string | string[] | undefined): string | undefined {
 	return Array.isArray(value) ? value[0] : value;
+}
+
+/** `—` rather than `0` when a number was never returned. */
+function orDash(value: number | null | undefined, format = formatNumber) {
+	return value === null || value === undefined ? "—" : format(value);
 }
 
 export default async function AnalyticsPage({
@@ -47,6 +49,26 @@ export default async function AnalyticsPage({
 		error = err instanceof Error ? err.message : "Failed to load analytics";
 	}
 
+	/**
+	 * The three supporting calls degrade independently.
+	 *
+	 * `allSettled`, not `all`: the header stats come from analytics, and a
+	 * usage or runtime call failing should blank those cells rather than take
+	 * the whole page down with it.
+	 */
+	const [usageResult, runtimesResult, executionsResult] =
+		await Promise.allSettled([
+			fetchUsage(),
+			fetchRuntimes(),
+			fetchExecutions(5),
+		]);
+
+	const usage = usageResult.status === "fulfilled" ? usageResult.value : null;
+	const runtimes =
+		runtimesResult.status === "fulfilled" ? runtimesResult.value : null;
+	const recent =
+		executionsResult.status === "fulfilled" ? executionsResult.value : null;
+
 	const data = analytics ?? {
 		requests: 0,
 		completed: 0,
@@ -68,15 +90,83 @@ export default async function AnalyticsPage({
 	const runtimeEntries = Object.entries(data.runtimeUsage).sort(
 		(a, b) => b[1] - a[1],
 	);
-	const capabilityEntries = Object.keys(data.popularCapabilities);
+
+	/** Highest first, five rows, exactly as the design's panel is sized for. */
+	const topCapabilities = Object.entries(data.popularCapabilities)
+		.sort((a, b) => b[1] - a[1])
+		.slice(0, 5);
+
+	const successRate =
+		data.requests > 0
+			? `${((data.completed / data.requests) * 100).toFixed(1)}%`
+			: "—";
+
+	const healthy = runtimes?.filter((rt) => rt.status === "healthy").length ?? 0;
+
+	/**
+	 * The design's nine cells, every one from a real response.
+	 *
+	 * Two of its labels were changed rather than filled with something that
+	 * looks like them:
+	 *
+	 * - "Executions this month" is now "Executions (range)". Quota is metered
+	 *   hourly with a rollover bucket — there is no monthly window anywhere in
+	 *   the platform, so a monthly figure would have to be invented or summed
+	 *   from a range the picker above already controls. It reads the range.
+	 * - The design's ninth cell pairs with an "Uptime 99.98%" elsewhere in the
+	 *   same view. Nothing here measures uptime, so that number does not exist
+	 *   to be shown and no cell pretends otherwise.
+	 */
+	const metrics: { label: string; value: string }[] = [
+		{
+			label: "Total capability executions",
+			value: formatNumber(data.capabilityCalls),
+		},
+		{ label: "Executions this hour", value: orDash(usage?.executions) },
+		{ label: "Executions (range)", value: formatNumber(data.requests) },
+		{
+			label: "Hourly rollover remaining",
+			// `null` is unlimited on enterprise, and is not the same as zero left.
+			value:
+				usage?.quota?.remaining === null && usage?.quota
+					? "Unlimited"
+					: orDash(usage?.quota?.remaining),
+		},
+		{ label: "Active runtimes", value: orDash(runtimes?.length ?? null) },
+		{
+			label: "Active capabilities",
+			value: formatNumber(Object.keys(data.popularCapabilities).length),
+		},
+		{
+			label: "Average response time",
+			value: data.averageLatencyMs
+				? formatDuration(data.averageLatencyMs)
+				: "—",
+		},
+		{ label: "Success rate", value: successRate },
+		{ label: "Error count", value: formatNumber(data.errors) },
+	];
 
 	return (
-		<div className="space-y-10">
+		<div className="space-y-8">
 			<FadeIn>
 				<PageHeader
-					eyebrow="Observability"
-					title="Analytics"
-					description="Live requests, tokens, runtime usage, popular capabilities, errors, and latency from the Cheela API."
+					eyebrow="Analytics"
+					title="Usage & performance"
+					description="Requests, tokens, capabilities, runtimes and latency, read from the Cheela API."
+					actions={
+						usage ? (
+							<span
+								className={
+									usage.tier === "free"
+										? "rounded-pill border border-console-border px-2.5 py-1 text-2xs uppercase tracking-wide text-console-fg-muted"
+										: "rounded-pill bg-accent-soft px-2.5 py-1 text-2xs uppercase tracking-wide text-accent-strong"
+								}
+							>
+								{usage.tier}
+							</span>
+						) : null
+					}
 				/>
 			</FadeIn>
 
@@ -86,7 +176,6 @@ export default async function AnalyticsPage({
 				</Card>
 			) : null}
 
-			{/* One filter row, above everything it scopes. */}
 			<AnalyticsRangePicker
 				activeDays={activeDays}
 				maxWindowDays={range?.maxWindowDays ?? 7}
@@ -94,29 +183,20 @@ export default async function AnalyticsPage({
 			/>
 
 			<FadeIn delay={0.05}>
-				<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-					<MetricCard
-						label="Completed"
-						value={data.completed}
-						delta={`${data.failed} failed`}
-						icon={Activity}
-					/>
-					<MetricCard
-						label="Capability calls"
-						value={data.capabilityCalls}
-						icon={Waypoints}
-					/>
-					<MetricCard
-						label="Avg latency"
-						value={formatDuration(data.averageLatencyMs || 0)}
-						icon={Clock3}
-					/>
-					<MetricCard
-						label="Total tokens"
-						value={formatNumber(data.totalTokens)}
-						delta={`${formatNumber(data.inputTokens)} in / ${formatNumber(data.outputTokens)} out`}
-						icon={Coins}
-					/>
+				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+					{metrics.map((metric) => (
+						<div
+							className="rounded-lg border border-console-border bg-white/[0.02] p-5"
+							key={metric.label}
+						>
+							<div className="text-xs text-console-fg-muted">
+								{metric.label}
+							</div>
+							<div className="mt-2 font-display text-xl font-semibold tracking-tight text-console-fg">
+								{metric.value}
+							</div>
+						</div>
+					))}
 				</div>
 			</FadeIn>
 
@@ -132,7 +212,7 @@ export default async function AnalyticsPage({
 							<div className="flex flex-wrap items-start justify-between gap-4">
 								<div>
 									<h2 className="font-display text-xl font-semibold tracking-tight text-console-fg">
-										Requests over time
+										Executions over time
 									</h2>
 									<p className="mt-1 text-sm text-console-fg-muted">
 										{range?.bucket === "hour" ? "Hourly" : "Daily"} buckets over
@@ -158,84 +238,146 @@ export default async function AnalyticsPage({
 
 					<div className="grid gap-6 lg:grid-cols-2">
 						<FadeIn delay={0.1}>
-							<Card className="space-y-6 p-6 sm:p-8">
-								<div>
-									<h2 className="font-display text-xl font-semibold tracking-tight text-console-fg">
-										Popular capabilities
-									</h2>
-									<p className="mt-1 text-sm text-console-fg-muted">
-										Most invoked tools across registered runtimes.
-									</p>
-								</div>
-								{capabilityEntries.length === 0 ? (
+							<Card className="space-y-4 p-6 sm:p-8">
+								<h2 className="text-sm font-medium text-console-fg">
+									Top 5 capabilities
+								</h2>
+								{topCapabilities.length === 0 ? (
 									<p className="text-sm text-console-fg-muted">
 										No capability calls yet.
 									</p>
 								) : (
-									<CapabilityBars data={data.popularCapabilities} />
+									<div>
+										{topCapabilities.map(([name, count]) => (
+											<div
+												className="flex justify-between gap-4 border-t border-console-border py-2 text-sm"
+												key={name}
+											>
+												<span className="truncate font-mono text-console-fg">
+													{name}
+												</span>
+												<span className="shrink-0 text-console-fg-muted">
+													{formatNumber(count)}
+												</span>
+											</div>
+										))}
+									</div>
 								)}
 							</Card>
 						</FadeIn>
 
 						<FadeIn delay={0.15}>
-							<Card className="space-y-6 p-6 sm:p-8">
+							<Card className="space-y-4 p-6 sm:p-8">
+								<h2 className="text-sm font-medium text-console-fg">
+									Recent activity
+								</h2>
+								{/*
+								  Recent executions, not an audit feed.
+
+								  The design lists things like "Runtime rt_8f2a deployed v3"
+								  and "API key rotated". Nothing records those — there is no
+								  audit log in the API — so this shows the most recent
+								  executions, which is real, is the same shape, and is what a
+								  reader of this panel is most likely looking for.
+								*/}
+								{!recent || recent.length === 0 ? (
+									<p className="text-sm text-console-fg-muted">
+										No executions yet.
+									</p>
+								) : (
+									<div>
+										{recent.map((execution) => (
+											<div
+												className="flex justify-between gap-3 border-t border-console-border py-2 text-sm"
+												key={execution.executionId}
+											>
+												<span className="truncate text-console-fg">
+													<span
+														className={
+															execution.status === "failed"
+																? "text-danger"
+																: "text-console-fg-muted"
+														}
+													>
+														{execution.status}
+													</span>{" "}
+													{execution.preview}
+												</span>
+												<span className="shrink-0 text-console-fg-muted">
+													{formatRelativeTime(execution.startedAt)}
+												</span>
+											</div>
+										))}
+									</div>
+								)}
+							</Card>
+						</FadeIn>
+					</div>
+
+					<div className="grid gap-6 lg:grid-cols-2">
+						<FadeIn delay={0.18}>
+							<Card className="space-y-4 p-6 sm:p-8">
 								<div>
-									<h2 className="font-display text-xl font-semibold tracking-tight text-console-fg">
+									<h2 className="text-sm font-medium text-console-fg">
 										Runtime usage
 									</h2>
 									<p className="mt-1 text-sm text-console-fg-muted">
-										Executions attributed per runtime ID.
+										Executions attributed per runtime ID
+										{runtimes
+											? ` · ${healthy} of ${runtimes.length} healthy`
+											: ""}
+										.
 									</p>
 								</div>
-								<div className="space-y-3">
-									{runtimeEntries.length === 0 ? (
-										<p className="text-sm text-console-fg-muted">
-											No runtime usage yet.
-										</p>
-									) : (
-										runtimeEntries.map(([runtimeId, count]) => {
-											// Pro adds error count and latency per runtime; free gets
-											// the request count it always had.
-											const detail = data.runtimeBreakdown?.find(
-												(entry) => entry.runtimeId === runtimeId,
-											);
-											return (
-												<div
-													key={runtimeId}
-													className="flex items-center justify-between gap-4 rounded-lg border border-console-border bg-white/[0.02] px-4 py-3"
-												>
-													<span className="truncate font-mono text-sm text-console-fg">
-														{runtimeId}
-													</span>
-													<span className="shrink-0 text-sm text-console-fg-muted">
-														{detail && detail.averageLatencyMs > 0 ? (
-															<>{formatDuration(detail.averageLatencyMs)} · </>
-														) : null}
-														{detail && detail.errors > 0 ? (
-															<span className="text-danger">
-																{formatNumber(detail.errors)} failed ·{" "}
-															</span>
-														) : null}
-														{formatNumber(count)}
-													</span>
-												</div>
-											);
-										})
-									)}
-								</div>
+								{runtimeEntries.length === 0 ? (
+									<p className="text-sm text-console-fg-muted">
+										No runtime usage yet.
+									</p>
+								) : (
+									<div>
+										{runtimeEntries.map(([runtimeId, count]) => (
+											<div
+												className="flex justify-between gap-4 border-t border-console-border py-2 text-sm"
+												key={runtimeId}
+											>
+												<span className="truncate font-mono text-console-fg">
+													{runtimeId}
+												</span>
+												<span className="shrink-0 text-console-fg-muted">
+													{formatNumber(count)}
+												</span>
+											</div>
+										))}
+									</div>
+								)}
+							</Card>
+						</FadeIn>
 
+						<FadeIn delay={0.2}>
+							<Card className="space-y-4 p-6 sm:p-8">
+								<h2 className="text-sm font-medium text-console-fg">Errors</h2>
 								<div className="flex items-start gap-3 rounded-lg border border-danger/20 bg-danger/5 p-4">
-									<AlertTriangle className="mt-0.5 size-4 text-danger" />
+									<AlertTriangle className="mt-0.5 size-4 shrink-0 text-danger" />
 									<div>
 										<div className="text-sm text-console-fg">Error rate</div>
 										<p className="mt-1 text-sm leading-relaxed text-console-fg-muted">
-											{data.errors} failures of {data.requests || 0} requests
+											{formatNumber(data.errors)} failures of{" "}
+											{formatNumber(data.requests)} requests
 											{data.requests > 0
 												? ` (${((data.errors / data.requests) * 100).toFixed(1)}%).`
 												: "."}
 										</p>
 									</div>
 								</div>
+								{/*
+								  No error breakdown by cause, and no retry count.
+
+								  The design splits errors into Timeout / Rate limit / Invalid
+								  input and shows "failed / retried". The API categorises
+								  neither, so those rows would be fiction dressed as
+								  diagnostics — the one place in a dashboard where being wrong
+								  costs the most.
+								*/}
 							</Card>
 						</FadeIn>
 					</div>

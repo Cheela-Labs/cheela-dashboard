@@ -1,5 +1,6 @@
 import { AlertTriangle } from "lucide-react";
 import { AnalyticsRangePicker } from "@/components/dashboard/analytics-range-picker";
+import { AnalyticsRuntimePicker } from "@/components/dashboard/analytics-runtime-picker";
 import { RequestsTimeseries } from "@/components/dashboard/requests-timeseries";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Card } from "@/components/ui/card";
@@ -8,9 +9,11 @@ import { PageHeader } from "@/components/ui/page-header";
 import {
 	fetchAnalytics,
 	fetchExecutions,
+	fetchExecutionsForRuntime,
 	fetchRuntimes,
 	fetchUsage,
 } from "@/lib/live-data";
+import { resolveProjects } from "@/lib/projects-server";
 import { formatDuration, formatNumber, formatRelativeTime } from "@/lib/utils";
 
 export const metadata = {
@@ -35,6 +38,27 @@ export default async function AnalyticsPage({
 	const days = Number(first(params.days) ?? 7);
 	const activeDays = Number.isFinite(days) && days > 0 ? days : 7;
 
+	// The runtime list comes first: it populates the picker, and the `?runtime=`
+	// param has to be checked against it before anything is scoped by it. A stale
+	// or hand-edited id would otherwise 404 the analytics call and blank a page
+	// that should simply have shown the account-wide view.
+	const { selectedProjectId } = await resolveProjects();
+
+	let runtimes: Awaited<ReturnType<typeof fetchRuntimes>> | null = null;
+	try {
+		runtimes = await fetchRuntimes(selectedProjectId);
+	} catch {
+		// The picker disappears and the page stays account-wide, which is the
+		// same thing it did before there was a picker.
+	}
+
+	const requestedRuntimeId = first(params.runtime);
+	const activeRuntimeId =
+		requestedRuntimeId &&
+		runtimes?.some((runtime) => runtime.runtimeId === requestedRuntimeId)
+			? requestedRuntimeId
+			: undefined;
+
 	let analytics: Awaited<ReturnType<typeof fetchAnalytics>> | null = null;
 	let error: string | null = null;
 
@@ -44,28 +68,27 @@ export default async function AnalyticsPage({
 				first(params.from) ??
 				new Date(Date.now() - activeDays * 86_400_000).toISOString(),
 			bucket: first(params.bucket) ?? (activeDays <= 1 ? "hour" : "day"),
+			runtimeId: activeRuntimeId,
 		});
 	} catch (err) {
 		error = err instanceof Error ? err.message : "Failed to load analytics";
 	}
 
 	/**
-	 * The three supporting calls degrade independently.
+	 * The supporting calls degrade independently.
 	 *
-	 * `allSettled`, not `all`: the header stats come from analytics, and a
-	 * usage or runtime call failing should blank those cells rather than take
-	 * the whole page down with it.
+	 * `allSettled`, not `all`: the header stats come from analytics, and a usage
+	 * or execution call failing should blank those cells rather than take the
+	 * whole page down with it.
 	 */
-	const [usageResult, runtimesResult, executionsResult] =
-		await Promise.allSettled([
-			fetchUsage(),
-			fetchRuntimes(),
-			fetchExecutions(5),
-		]);
+	const [usageResult, executionsResult] = await Promise.allSettled([
+		fetchUsage(),
+		activeRuntimeId
+			? fetchExecutionsForRuntime(activeRuntimeId, 5)
+			: fetchExecutions(5),
+	]);
 
 	const usage = usageResult.status === "fulfilled" ? usageResult.value : null;
-	const runtimes =
-		runtimesResult.status === "fulfilled" ? runtimesResult.value : null;
 	const recent =
 		executionsResult.status === "fulfilled" ? executionsResult.value : null;
 
@@ -153,7 +176,11 @@ export default async function AnalyticsPage({
 				<PageHeader
 					eyebrow="Analytics"
 					title="Usage & performance"
-					description="Requests, tokens, capabilities, runtimes and latency, read from the Cheela API."
+					description={
+						activeRuntimeId
+							? `Every figure below is scoped to ${activeRuntimeId}.`
+							: "Requests, tokens, capabilities, runtimes and latency across every runtime in this project. Pick one to see its own numbers — an account-wide error rate hides a single broken runtime."
+					}
 					actions={
 						usage ? (
 							<span
@@ -176,11 +203,24 @@ export default async function AnalyticsPage({
 				</Card>
 			) : null}
 
-			<AnalyticsRangePicker
-				activeDays={activeDays}
-				maxWindowDays={range?.maxWindowDays ?? 7}
-				clamped={Boolean(range?.clamped)}
-			/>
+			<div className="flex flex-wrap items-center justify-between gap-4">
+				<AnalyticsRangePicker
+					activeDays={activeDays}
+					maxWindowDays={range?.maxWindowDays ?? 7}
+					clamped={Boolean(range?.clamped)}
+				/>
+				<AnalyticsRuntimePicker
+					runtimes={runtimes ?? []}
+					activeRuntimeId={activeRuntimeId}
+				/>
+			</div>
+
+			{requestedRuntimeId && !activeRuntimeId ? (
+				<Card className="border-warning/25 bg-warning/5 p-4 text-sm text-console-fg-muted">
+					No runtime <code className="text-accent">{requestedRuntimeId}</code>{" "}
+					in this project — showing every runtime instead.
+				</Card>
+			) : null}
 
 			<FadeIn delay={0.05}>
 				<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

@@ -72,6 +72,46 @@ export async function fetchExecutions(limit = 50) {
 	return data.executions;
 }
 
+/**
+ * One runtime's executions.
+ *
+ * A different route from `fetchExecutions`, because `GET /v1/executions` is
+ * owner-scoped with no runtime filter, while `GET /v1/traces/runtime/:id`
+ * exists precisely for this and is served by the `{runtimeId, startedAt}`
+ * index. It returns raw traces rather than the mapped summary, so the shapes
+ * are reconciled here — a panel showing every runtime's executions beside
+ * figures scoped to one would be worse than not scoping at all.
+ */
+export async function fetchExecutionsForRuntime(runtimeId: string, limit = 50) {
+	const data = await apiFetch<{
+		traces: Array<{
+			executionId: string;
+			runtimeId: string;
+			status: ExecutionSummary["status"];
+			finishReason?: string;
+			durationMs?: number;
+			capabilityCalls?: unknown[];
+			startedAt: string;
+			completedAt?: string;
+			error?: string;
+		}>;
+	}>(`/v1/traces/runtime/${encodeURIComponent(runtimeId)}?limit=${limit}`);
+
+	return data.traces.map(
+		(trace): ExecutionSummary => ({
+			executionId: trace.executionId,
+			runtimeId: trace.runtimeId,
+			status: trace.status,
+			finishReason: trace.finishReason,
+			durationMs: trace.durationMs,
+			capabilityCalls: trace.capabilityCalls?.length ?? 0,
+			startedAt: trace.startedAt,
+			completedAt: trace.completedAt,
+			error: trace.error,
+		}),
+	);
+}
+
 export async function fetchExecution(executionId: string) {
 	const data = await apiFetch<
 		ExecutionSummary & {
@@ -111,7 +151,13 @@ export async function fetchExecution(executionId: string) {
 }
 
 export async function fetchAnalytics(
-	query: { from?: string; to?: string; bucket?: string } = {},
+	query: {
+		from?: string;
+		to?: string;
+		bucket?: string;
+		/** Narrows every figure to one runtime. Omitted means the whole account. */
+		runtimeId?: string;
+	} = {},
 ) {
 	const params = new URLSearchParams();
 	for (const [key, value] of Object.entries(query)) {

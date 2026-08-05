@@ -152,6 +152,13 @@ export default async function AnalyticsPage({
 
 	const healthy = runtimes?.filter((rt) => rt.status === "healthy").length ?? 0;
 
+	// The runtimes are already loaded for the picker, so naming them in the usage
+	// panel costs nothing. Falls back to the id for a runtime that has since been
+	// deleted but still appears in the range.
+	const runtimeNames = Object.fromEntries(
+		(runtimes ?? []).map((runtime) => [runtime.runtimeId, runtime.displayName]),
+	);
+
 	// Pro-only, and the server already computes it — the page was fetching this
 	// breakdown and throwing away everything but the request count.
 	const detailedRuntimes =
@@ -468,8 +475,8 @@ export default async function AnalyticsPage({
 													className="flex items-baseline justify-between gap-4 border-t border-console-border py-2 text-sm"
 													key={runtimeId}
 												>
-													<span className="truncate font-mono text-console-fg">
-														{runtimeId}
+													<span className="truncate text-console-fg">
+														{runtimeNames[runtimeId] ?? runtimeId}
 													</span>
 													<span className="flex shrink-0 items-baseline gap-3 text-console-fg-muted">
 														{detail ? (

@@ -22,7 +22,7 @@ export function AnalyticsRuntimePicker({
 	runtimes,
 	activeRuntimeId,
 }: {
-	runtimes: Array<{ runtimeId: string; status?: string }>;
+	runtimes: Array<{ runtimeId: string; displayName: string; status?: string }>;
 	activeRuntimeId?: string;
 }) {
 	const router = useRouter();
@@ -68,7 +68,7 @@ export function AnalyticsRuntimePicker({
 				<option value="">All runtimes</option>
 				{runtimes.map((runtime) => (
 					<option key={runtime.runtimeId} value={runtime.runtimeId}>
-						{runtime.runtimeId}
+						{runtime.displayName}
 					</option>
 				))}
 			</select>

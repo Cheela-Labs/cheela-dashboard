@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 
 type RuntimePreviewData = {
 	runtimeId: string;
+	displayName: string;
 	version: string;
 	capabilityNames: string[];
 	status: "healthy" | "degraded" | "offline";
@@ -31,13 +32,13 @@ export function RuntimePreviewRow({
 					className="w-full cursor-pointer rounded-lg border border-console-border p-5 text-left transition-colors hover:border-accent/30"
 				>
 					<div className="mb-3 flex items-center justify-between">
-						<div className="font-mono text-sm text-console-fg">
-							{runtime.runtimeId}
+						<div className="text-sm font-medium text-console-fg">
+							{runtime.displayName}
 						</div>
 						<Badge tone={statusTone(runtime.status)}>{runtime.status}</Badge>
 					</div>
-					<div className="mb-3 text-xs text-console-fg-muted">
-						v{runtime.version}
+					<div className="mb-3 font-mono text-xs text-console-fg-muted">
+						{runtime.runtimeId} · v{runtime.version}
 					</div>
 					<div className="flex flex-wrap gap-1.5">
 						{runtime.capabilityNames.slice(0, 2).map((cap) => (

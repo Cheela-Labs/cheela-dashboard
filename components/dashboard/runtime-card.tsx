@@ -6,6 +6,7 @@ import { formatRelativeTime } from "@/lib/utils";
 
 type RuntimeCardData = {
 	runtimeId: string;
+	displayName: string;
 	version: string;
 	tier: string;
 	capabilityNames: string[];
@@ -38,14 +39,17 @@ export function RuntimeCard({ runtime }: { runtime: RuntimeCardData }) {
 							<Boxes className="size-5" />
 						</div>
 						<div>
-							<div className="font-mono text-sm text-console-fg">
-								{runtime.runtimeId}
+							{/* Name first. The id is still shown, because it is what goes
+							    into code and into a support message — but it is no longer the
+							    only thing identifying the runtime. */}
+							<div className="text-sm font-medium text-console-fg">
+								{runtime.displayName}
 							</div>
 							{/* Provider and model are identical for every runtime — one
 							    central credential, one model — so naming them here was a
 							    column of the same string repeated down the page. */}
-							<div className="mt-1 text-xs text-console-fg-muted">
-								v{runtime.version}
+							<div className="mt-1 font-mono text-xs text-console-fg-muted">
+								{runtime.runtimeId} · v{runtime.version}
 							</div>
 						</div>
 					</div>

@@ -12,6 +12,7 @@ import { formatRelativeTime } from "@/lib/utils";
 
 type RuntimeDetailData = {
 	runtimeId: string;
+	displayName: string;
 	version: string;
 	status: "healthy" | "degraded" | "offline";
 	capabilityNames: string[];
@@ -41,15 +42,9 @@ export function RuntimeDetailDialog({
 					</div>
 					<Badge tone={statusTone(runtime.status)}>{runtime.status}</Badge>
 				</div>
-				<DialogHeader title={runtime.runtimeId} className="mb-6 mt-0" />
+				<DialogHeader title={runtime.displayName} className="mb-6 mt-0" />
 
 				<div className="mb-2 space-y-5">
-					<div>
-						<div className="mb-2 text-2xs tracking-wide text-console-fg-muted">
-							VERSION
-						</div>
-						<div className="text-sm text-console-fg">v{runtime.version}</div>
-					</div>
 					<div>
 						<div className="mb-2 text-2xs tracking-wide text-console-fg-muted">
 							CAPABILITIES
@@ -67,6 +62,14 @@ export function RuntimeDetailDialog({
 									</span>
 								))
 							)}
+						</div>
+					</div>
+					<div>
+						<div className="mb-2 text-2xs tracking-wide text-console-fg-muted">
+							RUNTIME ID
+						</div>
+						<div className="font-mono text-sm text-console-fg">
+							{runtime.runtimeId}
 						</div>
 					</div>
 					<div>

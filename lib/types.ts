@@ -3,6 +3,13 @@ export type RuntimeTier = "free" | "pro" | "enterprise";
 
 export type RuntimeSummary = {
 	runtimeId: string;
+	/**
+	 * What a person calls this runtime. Required at registration now.
+	 *
+	 * Optional here because runtimes created before it was required have none —
+	 * `normalizeRuntime` falls back to the id rather than rendering a blank.
+	 */
+	name?: string;
 	/** The project this runtime is filed under. Absent on pre-projects runtimes. */
 	projectId?: string;
 	version: string;
@@ -231,6 +238,8 @@ export type ExecutionDetail = ExecutionSummary & {
  */
 export function normalizeRuntime(runtime: RuntimeSummary): RuntimeSummary & {
 	capabilityNames: string[];
+	/** The name, or the id when there is none. Never blank. */
+	displayName: string;
 	status: "healthy" | "degraded" | "offline";
 	deployment?: {
 		version?: number;
@@ -245,6 +254,7 @@ export function normalizeRuntime(runtime: RuntimeSummary): RuntimeSummary & {
 	return {
 		...runtime,
 		capabilityNames,
+		displayName: runtime.name?.trim() || runtime.runtimeId,
 		// An absent signal is not a positive one. Defaulting to "healthy" meant a
 		// runtime whose status the API did not send rendered as fine.
 		status: runtime.status ?? "offline",

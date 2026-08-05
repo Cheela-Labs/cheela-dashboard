@@ -11,8 +11,15 @@ function statusTone(status: ExecutionSummary["status"]) {
 
 export function ExecutionsTable({
 	executions,
+	runtimeNames,
 }: {
 	executions: ExecutionSummary[];
+	/**
+	 * runtimeId → display name, for callers that already loaded the runtimes.
+	 * Absent or unmatched falls back to the id — a row is never blank because a
+	 * runtime was deleted or the lookup was not supplied.
+	 */
+	runtimeNames?: Record<string, string>;
 }) {
 	return (
 		<div className="overflow-hidden rounded-lg border border-console-border">
@@ -41,8 +48,8 @@ export function ExecutionsTable({
 								{execution.executionId}
 							</div>
 						</div>
-						<div className="truncate font-mono text-sm text-console-fg-muted">
-							{execution.runtimeId}
+						<div className="truncate text-sm text-console-fg-muted">
+							{runtimeNames?.[execution.runtimeId] ?? execution.runtimeId}
 						</div>
 						<div>
 							<Badge tone={statusTone(execution.status)}>

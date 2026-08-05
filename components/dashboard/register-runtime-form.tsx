@@ -41,7 +41,7 @@ export function RegisterRuntimeForm() {
 				// server ignores a client-supplied one.
 				body: JSON.stringify({
 					version: form.get("version") || "0.0.0",
-					...(name ? { name } : {}),
+					name,
 					// The server files it here. Omitting it lands the runtime in the
 					// owner's default project, which is where every runtime used to go
 					// regardless of what the switcher said.
@@ -141,12 +141,20 @@ export function RegisterRuntimeForm() {
 		<Card className="max-w-3xl p-6 sm:p-8">
 			<form className="space-y-6" onSubmit={onSubmit}>
 				<label className="block space-y-2 text-sm">
-					<span className="text-console-fg-muted">Name (optional)</span>
+					<span className="text-console-fg-muted">Name</span>
+					{/* Required, and the browser enforces it before the request goes out
+					    — the server rejects a nameless registration, and a round trip to
+					    learn that is a worse way to find out. */}
 					<input
 						name="name"
 						placeholder="orders-runtime"
+						required
+						maxLength={100}
 						className="w-full rounded-lg border border-console-border bg-black/40 px-4 py-3 text-console-fg outline-none transition focus:border-accent/60"
 					/>
+					<span className="block text-xs text-console-fg-muted">
+						How this runtime is identified everywhere in the dashboard.
+					</span>
 				</label>
 
 				<label className="block space-y-2 text-sm">

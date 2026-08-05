@@ -27,8 +27,10 @@ export default async function RuntimeDetailPage({
 			<FadeIn>
 				<PageHeader
 					eyebrow="Runtime"
-					title={runtime.runtimeId}
-					description={`Version ${runtime.version}`}
+					title={runtime.displayName}
+					// The id stays visible: it is what goes into cheela.config.ts and
+					// into a support message, and the name is not unique.
+					description={`${runtime.runtimeId} · v${runtime.version}`}
 					actions={
 						<>
 							<Badge

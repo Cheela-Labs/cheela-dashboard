@@ -53,6 +53,12 @@ export default async function OverviewPage() {
 					errors: 0,
 				};
 
+	// The overview already has the runtimes, so naming them in the executions
+	// table costs nothing extra.
+	const runtimeNames = Object.fromEntries(
+		runtimes.map((runtime) => [runtime.runtimeId, runtime.displayName]),
+	);
+
 	// Report what actually failed. This used to be a boolean that rendered
 	// "could not reach the API" for any rejection at all, which sent people
 	// checking DNS and CORS when the real cause was a 401, or a mapping error in
@@ -184,7 +190,10 @@ export default async function OverviewPage() {
 								description="Run an agent through POST /v1/executions to see live traces here."
 							/>
 						) : (
-							<ExecutionsTable executions={executions} />
+							<ExecutionsTable
+								executions={executions}
+								runtimeNames={runtimeNames}
+							/>
 						)}
 					</section>
 				</FadeIn>

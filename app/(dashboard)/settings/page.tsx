@@ -1,5 +1,3 @@
-import { UpgradeButton } from "@/components/billing/upgrade-button";
-import { UpgradePlanDialog } from "@/components/dashboard/dialogs/upgrade-plan-dialog";
 import { QuotaBar } from "@/components/dashboard/quota-bar";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Button } from "@/components/ui/button";
@@ -25,6 +23,24 @@ function formatResetIn(periodEnd: string): string {
 /** "14:00 UTC". Rendered server-side, so UTC rather than a locale guess. */
 function formatResetAt(periodEnd: string): string {
 	return `${new Date(periodEnd).toISOString().slice(11, 16)} UTC`;
+}
+
+/** Whole days until `iso`, floored at 0. Negative means it already lapsed. */
+function daysUntil(iso: string): number {
+	return Math.max(
+		0,
+		Math.ceil((new Date(iso).getTime() - Date.now()) / 86_400_000),
+	);
+}
+
+/** "12 Sep 2026" — unambiguous in every locale, unlike 09/12/2026. */
+function formatDate(iso: string): string {
+	return new Date(iso).toLocaleDateString("en-GB", {
+		day: "numeric",
+		month: "short",
+		year: "numeric",
+		timeZone: "UTC",
+	});
 }
 
 function formatPlanPrice(plan: {
@@ -198,10 +214,51 @@ export default async function SettingsPage() {
 			<FadeIn delay={0.1}>
 				<Card className="space-y-5 p-6 sm:p-8">
 					<h2 className="text-lg font-medium text-console-fg">Billing</h2>
-					<p className="text-sm leading-6 text-console-fg-muted">
-						Prices are shown in USD. Pro checkout is charged in INR via Razorpay
-						using the configured USD→INR conversion rate.
-					</p>
+
+					{/*
+					  The paid window. Nothing showed it before, so the one thing a
+					  paying customer most wants from this page — how long they have
+					  left — was the one thing missing. These are one-off Razorpay
+					  orders rather than a recurring subscription, so this is an expiry
+					  and is labelled as one.
+					*/}
+					{usage?.subscriptionEnd ? (
+						<dl className="space-y-3 rounded-lg border border-console-border bg-white/[0.02] p-4 text-sm">
+							<div className="flex justify-between gap-4">
+								<dt className="text-console-fg-muted">Status</dt>
+								<dd className="uppercase tracking-wide text-console-fg">
+									{usage.subscriptionStatus ?? "active"}
+								</dd>
+							</div>
+							<div className="flex justify-between gap-4">
+								<dt className="text-console-fg-muted">
+									{daysUntil(usage.subscriptionEnd) === 0
+										? "Expired"
+										: "Expires"}
+								</dt>
+								<dd className="text-console-fg">
+									{formatDate(usage.subscriptionEnd)}
+								</dd>
+							</div>
+							<div className="flex justify-between gap-4">
+								<dt className="text-console-fg-muted">Days remaining</dt>
+								<dd
+									className={
+										daysUntil(usage.subscriptionEnd) <= 7
+											? "text-danger"
+											: "text-console-fg"
+									}
+								>
+									{daysUntil(usage.subscriptionEnd)}
+								</dd>
+							</div>
+							<p className="border-t border-console-border pt-3 text-xs text-console-fg-muted">
+								Pro does not auto-renew. Pay again before this date to extend
+								without a gap.
+							</p>
+						</dl>
+					) : null}
+
 					<div className="grid gap-3 lg:grid-cols-3">
 						{displayPlans.map((tier) => (
 							<div
@@ -243,12 +300,14 @@ export default async function SettingsPage() {
 								<div className="mt-4">
 									{tier.id === "pro" ? (
 										usage?.tier === "pro" || usage?.tier === "enterprise" ? (
-											<UpgradeButton currentTier={usage?.tier} />
+											<div className="rounded-lg border border-success/30 bg-success/10 px-4 py-3 text-sm text-success">
+												You are on the {usage.tier} plan.
+											</div>
 										) : (
-											<UpgradePlanDialog
-												currentTier={usage?.tier}
-												trigger={<Button>Upgrade to Pro</Button>}
-											/>
+											// A page rather than a dialog: choosing an interval and
+											// entering a coupon is more than a modal should carry,
+											// and a checkout worth linking to is worth a URL.
+											<Button href="/upgrade">Upgrade to Pro</Button>
 										)
 									) : null}
 									{tier.id === "enterprise" &&

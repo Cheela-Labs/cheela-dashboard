@@ -186,6 +186,12 @@ export async function fetchPlans() {
 			contactUrl?: string;
 			currency?: string;
 			interval?: string;
+			/** Present on Pro. Derived from the monthly price, never configured separately. */
+			yearly?: {
+				priceUsd: number;
+				listPriceUsd: number;
+				discountPercent: number;
+			};
 			features: string[];
 			razorpayEnabled?: boolean;
 		}>;

@@ -150,6 +150,25 @@ export type OwnerUsage = {
 	/** ISO. The usage window is the hour. */
 	periodStart?: string;
 	periodEnd?: string;
+	/**
+	 * The paid subscription window — a different thing from `periodEnd`, which
+	 * bounds the hourly quota. Optional so an older control plane still renders.
+	 */
+	subscriptionStatus?: "none" | "active" | "past_due" | "cancelled";
+	/** When Pro lapses. These are one-off orders, so an expiry, not a renewal. */
+	subscriptionEnd?: string | null;
+};
+
+export type BillingInterval = "monthly" | "yearly";
+
+/** What a checkout would cost. Amounts are paise (INR). */
+export type BillingQuote = {
+	interval: BillingInterval;
+	currency: string;
+	/** Before any coupon. */
+	listAmount: number;
+	amount: number;
+	coupon?: { code: string; percentOff: number; discount: number };
 };
 
 export type TraceCapabilityCall = {

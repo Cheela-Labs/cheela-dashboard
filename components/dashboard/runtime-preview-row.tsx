@@ -6,8 +6,6 @@ import { Badge } from "@/components/ui/badge";
 type RuntimePreviewData = {
 	runtimeId: string;
 	version: string;
-	providerName: string;
-	modelName: string;
 	capabilityNames: string[];
 	status: "healthy" | "degraded" | "offline";
 	updatedAt: string;
@@ -39,7 +37,7 @@ export function RuntimePreviewRow({
 						<Badge tone={statusTone(runtime.status)}>{runtime.status}</Badge>
 					</div>
 					<div className="mb-3 text-xs text-console-fg-muted">
-						{runtime.providerName} / {runtime.modelName}
+						v{runtime.version}
 					</div>
 					<div className="flex flex-wrap gap-1.5">
 						{runtime.capabilityNames.slice(0, 2).map((cap) => (

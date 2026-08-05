@@ -189,10 +189,16 @@ export type ExecutionDetail = ExecutionSummary & {
 	totalTokens?: number;
 };
 
+/**
+ * `providerName` and `modelName` are deliberately not derived here any more.
+ *
+ * They were the same two strings for every runtime — one central OpenRouter
+ * credential and one model, chosen by the platform and not configurable — so
+ * every surface that showed them was repeating a constant. The API still
+ * reports `provider` and `model`; nothing in this app renders them.
+ */
 export function normalizeRuntime(runtime: RuntimeSummary): RuntimeSummary & {
 	capabilityNames: string[];
-	providerName: string;
-	modelName: string;
 	status: "healthy" | "degraded" | "offline";
 	deployment?: {
 		version?: number;
@@ -203,22 +209,10 @@ export function normalizeRuntime(runtime: RuntimeSummary): RuntimeSummary & {
 	const capabilityNames = runtime.capabilities.map((cap) =>
 		typeof cap === "string" ? cap : cap.name,
 	);
-	const providerName =
-		(typeof runtime.provider === "string"
-			? runtime.provider
-			: runtime.provider?.provider) ?? "—";
-	const modelName =
-		runtime.model ??
-		(typeof runtime.provider === "object"
-			? runtime.provider?.model
-			: undefined) ??
-		"—";
 
 	return {
 		...runtime,
 		capabilityNames,
-		providerName,
-		modelName,
 		// An absent signal is not a positive one. Defaulting to "healthy" meant a
 		// runtime whose status the API did not send rendered as fine.
 		status: runtime.status ?? "offline",

@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { ProviderEndpointForm } from "@/components/dashboard/provider-endpoint-form";
 import { RuntimeKeysCard } from "@/components/dashboard/runtime-keys-card";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { fetchRuntime } from "@/lib/live-data";
-import { formatRelativeTime } from "@/lib/utils";
 
 export default async function RuntimeDetailPage({
 	params,
@@ -29,7 +27,7 @@ export default async function RuntimeDetailPage({
 				<PageHeader
 					eyebrow="Runtime"
 					title={runtime.runtimeId}
-					description={`Version ${runtime.version} · ${runtime.providerName} / ${runtime.modelName}`}
+					description={`Version ${runtime.version}`}
 					actions={
 						<>
 							<Badge
@@ -52,76 +50,22 @@ export default async function RuntimeDetailPage({
 			</FadeIn>
 
 			<div className="grid gap-6 lg:grid-cols-2">
-				<FadeIn delay={0.05}>
-					<Card className="space-y-5 p-6">
-						<h2 className="text-lg font-medium text-console-fg">
-							Configuration
-						</h2>
-						<dl className="space-y-4 text-sm">
-							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
-								<dt className="text-console-fg-muted">Connection</dt>
-								<dd className="text-console-fg">
-									{runtime.connection?.status ?? runtime.status}
-									{runtime.connection?.transport
-										? ` · ${runtime.connection.transport}`
-										: ""}
-								</dd>
-							</div>
-							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
-								<dt className="text-console-fg-muted">Deployment</dt>
-								<dd className="text-console-fg">
-									{runtime.deployment
-										? `v${runtime.deployment.version} · ${runtime.deployment.status}`
-										: "Not deployed"}
-								</dd>
-							</div>
-							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
-								<dt className="text-console-fg-muted">Tier</dt>
-								<dd className="text-console-fg">{runtime.tier}</dd>
-							</div>
-							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
-								<dt className="text-console-fg-muted">Provider</dt>
-								<dd className="text-console-fg">
-									{runtime.providerName} · {runtime.modelName}
-								</dd>
-							</div>
-							<div className="flex justify-between gap-4 border-b border-console-border pb-3">
-								<dt className="text-console-fg-muted">Transport</dt>
-								<dd className="text-console-fg">
-									{/* One transport for every tier now. */}
-									{runtime.connection?.transport ?? "Signed HTTPS"}
-								</dd>
-							</div>
-							<div className="flex justify-between gap-4">
-								<dt className="text-console-fg-muted">Updated</dt>
-								<dd className="text-console-fg">
-									{formatRelativeTime(runtime.updatedAt)}
-								</dd>
-							</div>
-						</dl>
-						{runtime.endpoint ? (
-							<div className="rounded-[16px] border border-console-border bg-black/40 p-4 font-mono text-xs text-console-fg-muted">
-								{runtime.endpoint}
-							</div>
-						) : null}
-					</Card>
-				</FadeIn>
+				{/*
+				  Keys and capabilities, and nothing else.
 
-				<FadeIn delay={0.075}>
+				  The Configuration card restated facts identical for every runtime on
+				  the platform — one central OpenRouter credential, one model, one
+				  transport — beside a tier that belongs to the account rather than to
+				  the runtime. The endpoint form was a second way to write something
+				  `cheela deploy` already sets from cheela.config.ts, and two ways to
+				  write one field is one too many.
+				*/}
+				<FadeIn delay={0.05}>
 					<RuntimeKeysCard
 						runtimeId={runtime.runtimeId}
 						deployKeyPrefix={runtime.deployKeyPrefix ?? "—"}
 						publicKeyPrefix={runtime.publicKeyPrefix ?? "—"}
 						allowedOrigins={runtime.allowedOrigins ?? []}
-					/>
-				</FadeIn>
-
-				<FadeIn delay={0.1}>
-					<ProviderEndpointForm
-						runtimeId={runtime.runtimeId}
-						provider={runtime.providerName}
-						model={runtime.modelName === "—" ? "" : runtime.modelName}
-						endpoint={runtime.endpoint}
 					/>
 				</FadeIn>
 

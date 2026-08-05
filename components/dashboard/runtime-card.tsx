@@ -9,8 +9,6 @@ type RuntimeCardData = {
 	version: string;
 	tier: string;
 	capabilityNames: string[];
-	providerName: string;
-	modelName: string;
 	status: "healthy" | "degraded" | "offline";
 	updatedAt: string;
 	connection?: {
@@ -43,8 +41,11 @@ export function RuntimeCard({ runtime }: { runtime: RuntimeCardData }) {
 							<div className="font-mono text-sm text-console-fg">
 								{runtime.runtimeId}
 							</div>
+							{/* Provider and model are identical for every runtime — one
+							    central credential, one model — so naming them here was a
+							    column of the same string repeated down the page. */}
 							<div className="mt-1 text-xs text-console-fg-muted">
-								v{runtime.version} · {runtime.providerName}/{runtime.modelName}
+								v{runtime.version}
 							</div>
 						</div>
 					</div>

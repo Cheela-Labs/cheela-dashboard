@@ -12,8 +12,6 @@ import { formatRelativeTime } from "@/lib/utils";
 
 type RuntimeDetailData = {
 	runtimeId: string;
-	providerName: string;
-	modelName: string;
 	version: string;
 	status: "healthy" | "degraded" | "offline";
 	capabilityNames: string[];
@@ -48,11 +46,9 @@ export function RuntimeDetailDialog({
 				<div className="mb-2 space-y-5">
 					<div>
 						<div className="mb-2 text-2xs tracking-wide text-console-fg-muted">
-							MODEL
+							VERSION
 						</div>
-						<div className="text-sm text-console-fg">
-							{runtime.providerName} / {runtime.modelName}
-						</div>
+						<div className="text-sm text-console-fg">v{runtime.version}</div>
 					</div>
 					<div>
 						<div className="mb-2 text-2xs tracking-wide text-console-fg-muted">

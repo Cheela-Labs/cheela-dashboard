@@ -5,7 +5,6 @@ import { FadeIn } from "@/components/motion/fade-in";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { getApiUrl } from "@/lib/api-url";
 import { fetchPlans, fetchUsage } from "@/lib/live-data";
 import { formatNumber } from "@/lib/utils";
 
@@ -13,7 +12,7 @@ export const metadata = {
 	title: "Settings",
 };
 
-/** "in 4h" / "in 35m" — the reporting window is the hour, which is not obvious from a raw timestamp. */
+/** "in 35m" — the window is the hour, which is not obvious from a raw timestamp. */
 function formatResetIn(periodEnd: string): string {
 	const remainingMs = new Date(periodEnd).getTime() - Date.now();
 	if (remainingMs <= 0) return "shortly";
@@ -21,6 +20,11 @@ function formatResetIn(periodEnd: string): string {
 	const hours = Math.floor(remainingMs / 3_600_000);
 	if (hours >= 1) return `in ${hours}h`;
 	return `in ${Math.max(1, Math.round(remainingMs / 60_000))}m`;
+}
+
+/** "14:00 UTC". Rendered server-side, so UTC rather than a locale guess. */
+function formatResetAt(periodEnd: string): string {
+	return `${new Date(periodEnd).toISOString().slice(11, 16)} UTC`;
 }
 
 function formatPlanPrice(plan: {
@@ -106,10 +110,6 @@ export default async function SettingsPage() {
 			<FadeIn delay={0.05}>
 				<Card className="space-y-5 p-6 sm:p-8">
 					<h2 className="text-lg font-medium text-console-fg">Usage Limits</h2>
-					<p className="text-sm leading-6 text-console-fg-muted">
-						Live usage for the authenticated owner. API{" "}
-						<code className="text-accent">{getApiUrl()}</code>
-					</p>
 					{usage ? (
 						<div className="space-y-5">
 							<div className="flex justify-between gap-4 text-sm">
@@ -119,29 +119,52 @@ export default async function SettingsPage() {
 								</span>
 							</div>
 
-							{/* Drawn as spent-of-capacity, because that is what the bucket
-							    enforces. `executions` below is this hour's count, which is a
-							    different (and smaller) number — the bucket spans the whole
-							    rollover window. */}
+							{/*
+							  This hour against the hourly allowance, not the whole bucket.
+							  The bucket spans the rollover window — capacity is
+							  refillPerHour × rolloverHours, so on Pro it read "1,240 / 48,000"
+							  and answered a question nobody asks. What you want to know is
+							  how much of *this hour* you have used and when it resets.
+
+							  It can exceed the allowance, because rollover is real: spending
+							  banked tokens is exactly how you run above the sustained rate.
+							  QuotaBar clamps the bar at 100%, and the number beside it keeps
+							  counting, which is the honest way round.
+							*/}
 							<QuotaBar
-								label="Execution allowance"
-								used={
-									usage.quota?.capacity != null && usage.quota.remaining != null
-										? usage.quota.capacity - usage.quota.remaining
-										: usage.executions
-								}
-								limit={usage.quota?.capacity}
+								label="This hour"
+								used={usage.executions}
+								limit={usage.quota?.refillPerHour}
 							/>
 
 							<dl className="space-y-3 border-t border-console-border pt-4 text-sm">
-								<div className="flex justify-between gap-4">
-									<dt className="text-console-fg-muted">
-										Executions this hour
-									</dt>
-									<dd className="text-console-fg">
-										{formatNumber(usage.executions)}
-									</dd>
-								</div>
+								{usage.periodEnd ? (
+									<div className="flex justify-between gap-4">
+										<dt className="text-console-fg-muted">
+											Hourly allowance resets
+										</dt>
+										<dd className="text-console-fg">
+											{formatResetIn(usage.periodEnd)}
+											<span className="ml-2 text-console-fg-muted">
+												{formatResetAt(usage.periodEnd)}
+											</span>
+										</dd>
+									</div>
+								) : null}
+								{usage.quota ? (
+									<div className="flex justify-between gap-4">
+										<dt className="text-console-fg-muted">
+											Rollover executions left
+											{/* The enforced number: what you can spend right now,
+											    banked allowance included. */}
+										</dt>
+										<dd className="text-console-fg">
+											{usage.quota.remaining === null
+												? "Unlimited"
+												: formatNumber(usage.quota.remaining)}
+										</dd>
+									</div>
+								) : null}
 								<div className="flex justify-between gap-4">
 									<dt className="text-console-fg-muted">Capability calls</dt>
 									{/* Metered and shown, never a ceiling: an execution costs one
@@ -163,21 +186,6 @@ export default async function SettingsPage() {
 									</dd>
 								</div>
 							</dl>
-
-							{usage.quota?.refillPerHour != null ? (
-								<p className="text-xs text-console-fg-muted">
-									Refills at {formatNumber(usage.quota.refillPerHour)}{" "}
-									executions/hour
-									{usage.limits?.rolloverHours
-										? `, banking up to ${usage.limits.rolloverHours}h of unused allowance`
-										: ""}
-									.
-								</p>
-							) : usage.periodEnd ? (
-								<p className="text-xs text-console-fg-muted">
-									Resets {formatResetIn(usage.periodEnd)}.
-								</p>
-							) : null}
 						</div>
 					) : (
 						<p className="text-sm text-console-fg-muted">

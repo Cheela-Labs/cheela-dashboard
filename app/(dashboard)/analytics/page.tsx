@@ -68,6 +68,11 @@ export default async function AnalyticsPage({
 				first(params.from) ??
 				new Date(Date.now() - activeDays * 86_400_000).toISOString(),
 			bucket: first(params.bucket) ?? (activeDays <= 1 ? "hour" : "day"),
+			// Scoped to the selected project, so this page agrees with the registry
+			// and the overview rather than quietly reporting the whole account.
+			// Rows written before `projectId` reached the rollups have none and
+			// will not match — see scripts/backfill-rollup-project-ids.ts.
+			projectId: selectedProjectId,
 			runtimeId: activeRuntimeId,
 		});
 	} catch (err) {
@@ -179,7 +184,7 @@ export default async function AnalyticsPage({
 					description={
 						activeRuntimeId
 							? `Every figure below is scoped to ${activeRuntimeId}.`
-							: "Requests, tokens, capabilities, runtimes and latency across every runtime in this project. Pick one to see its own numbers — an account-wide error rate hides a single broken runtime."
+							: "Requests, tokens, capabilities, runtimes and latency across this project. Pick a runtime to see its own numbers — an error rate averaged over several hides a single broken one."
 					}
 					actions={
 						usage ? (

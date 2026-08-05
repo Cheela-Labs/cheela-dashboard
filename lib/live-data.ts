@@ -157,6 +157,8 @@ export async function fetchAnalytics(
 		bucket?: string;
 		/** Narrows every figure to one runtime. Omitted means the whole account. */
 		runtimeId?: string;
+		/** Narrows to every runtime in one project. Composes with runtimeId. */
+		projectId?: string;
 	} = {},
 ) {
 	const params = new URLSearchParams();

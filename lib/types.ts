@@ -119,6 +119,21 @@ export type AnalyticsSummary = {
 	/** p95/p99 are null when the tier does not include them. */
 	latency?: { p50: number; p95: number | null; p99: number | null };
 	runtimeBreakdown?: RuntimeBreakdownEntry[];
+	/**
+	 * What this account's tier entitles it to, as the server sees it.
+	 *
+	 * The page gates on this rather than on the tier string from
+	 * `/v1/billing/usage`, so there is one decision about what "Pro analytics"
+	 * means and it is made where it is enforced. Optional so an older control
+	 * plane still renders.
+	 */
+	capabilities?: {
+		maxWindowDays: number;
+		buckets: AnalyticsBucket[];
+		detailedPercentiles: boolean;
+		detailedRuntimeBreakdown: boolean;
+		timeSeries: boolean;
+	};
 };
 
 export type OwnerUsage = {

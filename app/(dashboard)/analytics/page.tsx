@@ -1,4 +1,5 @@
 import { AlertTriangle } from "lucide-react";
+import { AnalyticsLockedCard } from "@/components/dashboard/analytics-locked-card";
 import { AnalyticsRangePicker } from "@/components/dashboard/analytics-range-picker";
 import { AnalyticsRuntimePicker } from "@/components/dashboard/analytics-runtime-picker";
 import { RequestsTimeseries } from "@/components/dashboard/requests-timeseries";
@@ -115,6 +116,25 @@ export default async function AnalyticsPage({
 	const latency = data.latency;
 	const range = data.range;
 
+	/**
+	 * What this account gets, decided by the server.
+	 *
+	 * Not re-derived from `usage.tier`: the tier string says which plan somebody
+	 * is on, and this says what that plan actually returns. Two places answering
+	 * that question is how a panel ends up hidden while the API fills it in, or
+	 * promised while the API withholds it.
+	 *
+	 * Defaults assume the full feature set, so an older control plane that does
+	 * not send `capabilities` renders exactly as it did before rather than
+	 * showing every paying customer an upgrade prompt.
+	 */
+	const entitled = data.capabilities ?? {
+		maxWindowDays: range?.maxWindowDays ?? 7,
+		detailedPercentiles: true,
+		detailedRuntimeBreakdown: true,
+		timeSeries: true,
+	};
+
 	const runtimeEntries = Object.entries(data.runtimeUsage).sort(
 		(a, b) => b[1] - a[1],
 	);
@@ -130,6 +150,12 @@ export default async function AnalyticsPage({
 			: "—";
 
 	const healthy = runtimes?.filter((rt) => rt.status === "healthy").length ?? 0;
+
+	// Pro-only, and the server already computes it — the page was fetching this
+	// breakdown and throwing away everything but the request count.
+	const detailedRuntimes =
+		entitled.detailedRuntimeBreakdown &&
+		(data.runtimeBreakdown?.length ?? 0) > 0;
 
 	/**
 	 * The design's nine cells, every one from a real response.
@@ -188,14 +214,17 @@ export default async function AnalyticsPage({
 					}
 					actions={
 						usage ? (
+							// Names the analytics depth, not just the plan — the design's
+							// "Free analytics" / "Pro analytics" badge. On this page the
+							// distinction that matters is what the numbers below include.
 							<span
 								className={
-									usage.tier === "free"
-										? "rounded-pill border border-console-border px-2.5 py-1 text-2xs uppercase tracking-wide text-console-fg-muted"
-										: "rounded-pill bg-accent-soft px-2.5 py-1 text-2xs uppercase tracking-wide text-accent-strong"
+									entitled.timeSeries
+										? "rounded-pill bg-accent-soft px-2.5 py-1 text-2xs uppercase tracking-wide text-accent-strong"
+										: "rounded-pill border border-console-border px-2.5 py-1 text-2xs uppercase tracking-wide text-console-fg-muted"
 								}
 							>
-								{usage.tier}
+								{usage.tier} analytics
 							</span>
 						) : null
 					}
@@ -253,32 +282,41 @@ export default async function AnalyticsPage({
 			) : (
 				<div className="space-y-6">
 					<FadeIn delay={0.08}>
-						<Card className="space-y-6 p-6 sm:p-8">
-							<div className="flex flex-wrap items-start justify-between gap-4">
-								<div>
-									<h2 className="font-display text-xl font-semibold tracking-tight text-console-fg">
-										Executions over time
-									</h2>
-									<p className="mt-1 text-sm text-console-fg-muted">
-										{range?.bucket === "hour" ? "Hourly" : "Daily"} buckets over
-										the selected range.
-									</p>
+						{entitled.timeSeries ? (
+							<Card className="space-y-6 p-6 sm:p-8">
+								<div className="flex flex-wrap items-start justify-between gap-4">
+									<div>
+										<h2 className="font-display text-xl font-semibold tracking-tight text-console-fg">
+											Executions over time
+										</h2>
+										<p className="mt-1 text-sm text-console-fg-muted">
+											{range?.bucket === "hour" ? "Hourly" : "Daily"} buckets
+											over the selected range.
+										</p>
+									</div>
+
+									{/*
+									  p95 and p99 come back null on a tier without them, and
+									  LatencyStat renders that as "—" rather than as a zero. A
+									  withheld measurement and a fast one are different facts.
+									*/}
+									{latency ? (
+										<dl className="flex gap-6 text-sm">
+											<LatencyStat label="p50" value={latency.p50} />
+											<LatencyStat label="p95" value={latency.p95} />
+											<LatencyStat label="p99" value={latency.p99} />
+										</dl>
+									) : null}
 								</div>
 
-								{latency ? (
-									<dl className="flex gap-6 text-sm">
-										<LatencyStat label="p50" value={latency.p50} />
-										<LatencyStat label="p95" value={latency.p95} />
-										<LatencyStat label="p99" value={latency.p99} />
-									</dl>
-								) : null}
-							</div>
-
-							<RequestsTimeseries
-								series={series}
-								bucket={range?.bucket ?? "day"}
-							/>
-						</Card>
+								<RequestsTimeseries
+									series={series}
+									bucket={range?.bucket ?? "day"}
+								/>
+							</Card>
+						) : (
+							<AnalyticsLockedCard maxWindowDays={entitled.maxWindowDays} />
+						)}
 					</FadeIn>
 
 					<div className="grid gap-6 lg:grid-cols-2">
@@ -371,7 +409,9 @@ export default async function AnalyticsPage({
 										Runtime usage
 									</h2>
 									<p className="mt-1 text-sm text-console-fg-muted">
-										Executions attributed per runtime ID
+										{detailedRuntimes
+											? "Executions, errors and latency per runtime"
+											: "Executions attributed per runtime ID"}
 										{runtimes
 											? ` · ${healthy} of ${runtimes.length} healthy`
 											: ""}
@@ -384,19 +424,55 @@ export default async function AnalyticsPage({
 									</p>
 								) : (
 									<div>
-										{runtimeEntries.map(([runtimeId, count]) => (
-											<div
-												className="flex justify-between gap-4 border-t border-console-border py-2 text-sm"
-												key={runtimeId}
-											>
-												<span className="truncate font-mono text-console-fg">
-													{runtimeId}
-												</span>
-												<span className="shrink-0 text-console-fg-muted">
-													{formatNumber(count)}
-												</span>
-											</div>
-										))}
+										{/*
+										  Error rate and latency per runtime are Pro-only, and the
+										  server zeroes them rather than omitting them on a tier
+										  without the entitlement — so this branches on the
+										  entitlement, not on whether the numbers look empty. A
+										  runtime with genuinely zero errors and a withheld
+										  measurement are otherwise the same two zeros.
+										*/}
+										{runtimeEntries.map(([runtimeId, count]) => {
+											const detail = detailedRuntimes
+												? data.runtimeBreakdown?.find(
+														(entry) => entry.runtimeId === runtimeId,
+													)
+												: undefined;
+
+											return (
+												<div
+													className="flex items-baseline justify-between gap-4 border-t border-console-border py-2 text-sm"
+													key={runtimeId}
+												>
+													<span className="truncate font-mono text-console-fg">
+														{runtimeId}
+													</span>
+													<span className="flex shrink-0 items-baseline gap-3 text-console-fg-muted">
+														{detail ? (
+															<>
+																<span
+																	className={
+																		detail.errors > 0
+																			? "text-danger"
+																			: undefined
+																	}
+																>
+																	{formatNumber(detail.errors)} err
+																</span>
+																<span>
+																	{detail.averageLatencyMs
+																		? formatDuration(detail.averageLatencyMs)
+																		: "—"}
+																</span>
+															</>
+														) : null}
+														<span className="text-console-fg">
+															{formatNumber(count)}
+														</span>
+													</span>
+												</div>
+											);
+										})}
 									</div>
 								)}
 							</Card>

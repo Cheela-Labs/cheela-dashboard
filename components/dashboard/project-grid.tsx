@@ -80,17 +80,33 @@ export function ProjectGrid({
 						{project.isDefault ? null : (
 							<div className="mt-2 flex justify-end">
 								<ConfirmDeleteDialog
-									blockedReason={
-										count > 0
-											? `${count} runtime${count === 1 ? " is" : "s are"} still in this project. Delete or move ${count === 1 ? "it" : "them"} first — deleting a project never deletes what is inside it.`
-											: null
-									}
 									confirmValue={project.name}
+									// Spelled out, and only when there is something to lose.
+									// This is the dialog's whole job: the endpoint will destroy
+									// production credentials for anyone who asks it to, so the
+									// confirmation has to say so before the typing, not after.
+									consequences={
+										count > 0
+											? [
+													`${count} runtime${count === 1 ? "" : "s"} in this project will be deleted.`,
+													"Their deploy and public keys stop working immediately — any page embedding one breaks.",
+													"Their execution traces are deleted too, including capability inputs and outputs.",
+												]
+											: undefined
+									}
 									description={
-										<>
-											This removes the project only. It cannot be undone, and
-											the name becomes available again.
-										</>
+										count > 0 ? (
+											<>
+												This deletes the project{" "}
+												<strong>and everything in it</strong>. It cannot be
+												undone.
+											</>
+										) : (
+											<>
+												This project is empty. Deleting it cannot be undone, and
+												the name becomes available again.
+											</>
+										)
 									}
 									label="project name"
 									onConfirm={async () => {

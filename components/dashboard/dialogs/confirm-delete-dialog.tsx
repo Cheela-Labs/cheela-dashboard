@@ -18,10 +18,9 @@ import {
  * third time somebody sees it; typing the name is the smallest friction that
  * cannot be cleared without reading.
  *
- * `blockedReason` exists so the dialog can refuse *before* the typing rather
- * than after the request — asking somebody to type a project name and then
- * telling them three runtimes are in the way wastes the one moment they were
- * actually paying attention.
+ * `consequences` is rendered above the input rather than below it, for the same
+ * reason: the one moment somebody is actually reading is before they start
+ * typing, so anything that would change their mind has to be there already.
  */
 export function ConfirmDeleteDialog({
 	trigger,
@@ -30,7 +29,6 @@ export function ConfirmDeleteDialog({
 	confirmValue,
 	label,
 	description,
-	blockedReason,
 	consequences,
 	onConfirm,
 }: {
@@ -40,7 +38,6 @@ export function ConfirmDeleteDialog({
 	/** What to call the thing in the input's label, e.g. "project name". */
 	label: string;
 	description: ReactNode;
-	blockedReason?: string | null;
 	consequences?: string[];
 	onConfirm: () => Promise<void>;
 }) {
@@ -50,10 +47,9 @@ export function ConfirmDeleteDialog({
 	const [error, setError] = useState<string | null>(null);
 
 	const matches = typed.trim() === confirmValue;
-	const blocked = Boolean(blockedReason);
 
 	async function confirm() {
-		if (!matches || blocked) return;
+		if (!matches) return;
 		setBusy(true);
 		setError(null);
 		try {
@@ -102,30 +98,24 @@ export function ConfirmDeleteDialog({
 						</ul>
 					) : null}
 
-					{blocked ? (
-						<p className="rounded-lg border border-console-border bg-white/[0.02] p-4 text-sm text-console-fg">
-							{blockedReason}
-						</p>
-					) : (
-						<label className="block space-y-2 text-sm">
-							<span className="text-console-fg-muted">
-								Type <code className="text-accent">{confirmValue}</code> to
-								confirm the {label}
-							</span>
-							<input
-								autoComplete="off"
-								className="w-full rounded-lg border border-console-border bg-black/40 px-4 py-3 font-mono text-sm text-console-fg outline-none transition focus:border-danger/60"
-								onChange={(event) => setTyped(event.target.value)}
-								onKeyDown={(event) => {
-									if (event.key === "Enter" && matches) {
-										event.preventDefault();
-										void confirm();
-									}
-								}}
-								value={typed}
-							/>
-						</label>
-					)}
+					<label className="block space-y-2 text-sm">
+						<span className="text-console-fg-muted">
+							Type <code className="text-accent">{confirmValue}</code> to
+							confirm the {label}
+						</span>
+						<input
+							autoComplete="off"
+							className="w-full rounded-lg border border-console-border bg-black/40 px-4 py-3 font-mono text-sm text-console-fg outline-none transition focus:border-danger/60"
+							onChange={(event) => setTyped(event.target.value)}
+							onKeyDown={(event) => {
+								if (event.key === "Enter" && matches) {
+									event.preventDefault();
+									void confirm();
+								}
+							}}
+							value={typed}
+						/>
+					</label>
 
 					{error ? <p className="text-sm text-danger">{error}</p> : null}
 
@@ -139,7 +129,7 @@ export function ConfirmDeleteDialog({
 						</Button>
 						<Button
 							className="flex-1"
-							disabled={!matches || blocked || busy}
+							disabled={!matches || busy}
 							onClick={() => void confirm()}
 							variant="danger"
 						>

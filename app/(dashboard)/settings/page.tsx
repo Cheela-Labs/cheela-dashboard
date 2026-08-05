@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { fetchPlans, fetchUsage } from "@/lib/live-data";
+import { PRO_PRICE_USD } from "@/lib/pricing";
 import { formatNumber } from "@/lib/utils";
 
 export const metadata = {
@@ -87,7 +88,7 @@ export default async function SettingsPage() {
 		{
 			id: "pro",
 			name: "Pro",
-			priceUsd: 50,
+			priceUsd: PRO_PRICE_USD,
 			features: [
 				"10 runtimes",
 				"2,000 executions/hour",

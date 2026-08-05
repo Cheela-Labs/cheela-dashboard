@@ -7,15 +7,17 @@
  * response; these constants exist so a failed plans call renders something
  * true-as-of-last-release rather than a blank.
  *
- * The dashboard used to state the price in three places and they had drifted to
- * $49 while the pricing page, the marketing site, the structured data and the
- * server all said $50 — the button advertised one price and the checkout
- * charged another. One constant means the next change cannot half-land.
+ * The dashboard once stated the price in three places and they had drifted
+ * apart, so the button advertised one figure and the checkout charged another.
+ * One constant means the next change cannot half-land.
  *
- * Change alongside the server's default, and alongside `apps/website`'s pricing
- * page and homepage preview, which hold their own copies for the same reason.
+ * Change alongside the server's `PRO_PRICE_USD` default, and alongside
+ * `apps/website`'s pricing page, homepage preview and structured data, which
+ * hold their own copies for the same reason. There are five places in total and
+ * they must agree — structured data especially, because a price in JSON-LD that
+ * disagrees with the page is a Google Merchant violation, not just a typo.
  */
-export const PRO_PRICE_USD = 50;
+export const PRO_PRICE_USD = 49;
 
 /**
  * Yearly is *derived*, exactly as the server derives it.

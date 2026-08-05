@@ -120,11 +120,11 @@ export default async function SettingsPage() {
 							</div>
 
 							{/*
-							  This hour against the hourly allowance, not the whole bucket.
-							  The bucket spans the rollover window — capacity is
+							  The current hour against the hourly allowance, not the whole
+							  bucket. The bucket spans the rollover window — capacity is
 							  refillPerHour × rolloverHours, so on Pro it read "1,240 / 48,000"
-							  and answered a question nobody asks. What you want to know is
-							  how much of *this hour* you have used and when it resets.
+							  and answered a question nobody asks. The window is named by the
+							  reset row below rather than by this label.
 
 							  It can exceed the allowance, because rollover is real: spending
 							  banked tokens is exactly how you run above the sustained rate.
@@ -132,7 +132,7 @@ export default async function SettingsPage() {
 							  counting, which is the honest way round.
 							*/}
 							<QuotaBar
-								label="This hour"
+								label="Executions"
 								used={usage.executions}
 								limit={usage.quota?.refillPerHour}
 							/>
@@ -216,9 +216,30 @@ export default async function SettingsPage() {
 										{formatPlanPrice(tier)}
 									</div>
 								</div>
-								<div className="mt-2 grow text-sm text-console-fg-muted">
-									{tier.features.join(" · ")}
-								</div>
+								{/*
+								  A list, not `features.join(" · ")`.
+
+								  Joined, each plan read as one run of text — "1 runtime · 100
+								  executions/hour · Community support" — so comparing a column
+								  against the one beside it meant re-parsing a sentence rather
+								  than reading across a row. The features are already a
+								  string[]; they were being flattened at the last step.
+								  Check-marked to match UpgradePlanDialog, so the two places
+								  that sell Pro look like each other.
+								*/}
+								<ul className="mt-3 grow space-y-2">
+									{tier.features.map((feature) => (
+										<li
+											className="flex gap-2 text-sm text-console-fg-muted"
+											key={feature}
+										>
+											<span aria-hidden="true" className="text-accent">
+												✓
+											</span>
+											<span>{feature}</span>
+										</li>
+									))}
+								</ul>
 								<div className="mt-4">
 									{tier.id === "pro" ? (
 										usage?.tier === "pro" || usage?.tier === "enterprise" ? (

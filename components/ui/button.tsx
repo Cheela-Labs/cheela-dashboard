@@ -7,7 +7,13 @@ import type {
 } from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "outline" | "ghost" | "link";
+type Variant =
+	| "primary"
+	| "secondary"
+	| "outline"
+	| "ghost"
+	| "link"
+	| "danger";
 type Size = "sm" | "md" | "lg";
 
 const baseClassName =
@@ -21,6 +27,9 @@ const variantClasses: Record<Variant, string> = {
 		"border border-console-border bg-transparent text-console-fg hover:bg-white/5",
 	ghost: "bg-transparent text-console-fg hover:bg-white/5",
 	link: "bg-transparent px-0 py-0 text-accent underline-offset-4 hover:underline",
+	// Destructive actions. Filled rather than outlined: a delete button that
+	// looks like every other button is one somebody clicks without reading.
+	danger: "bg-danger text-white hover:bg-danger/90",
 };
 
 const sizeClasses: Record<Size, string> = {

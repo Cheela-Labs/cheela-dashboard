@@ -1,9 +1,13 @@
 "use client";
 
-import { FolderKanban } from "lucide-react";
+import { FolderKanban, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ConfirmDeleteDialog } from "@/components/dashboard/dialogs/confirm-delete-dialog";
 import { FadeIn } from "@/components/motion/fade-in";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useProjects } from "@/lib/projects";
+import { useCheelaApi } from "@/lib/use-cheela-api";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,6 +25,8 @@ export function ProjectGrid({
 	runtimeCounts: Record<string, number>;
 }) {
 	const { projects, selectedProjectId, selectProject } = useProjects();
+	const { request } = useCheelaApi();
+	const router = useRouter();
 
 	return (
 		<div className="grid gap-4 lg:grid-cols-2">
@@ -60,6 +66,49 @@ export function ProjectGrid({
 								</div>
 							</Card>
 						</button>
+
+						{/*
+						  Outside the selecting button, not inside it: a delete control
+						  nested in a button that switches project is one stray click from
+						  doing the wrong thing, and nested interactive elements are
+						  invalid HTML besides.
+
+						  The default project gets no delete control at all rather than a
+						  disabled one — `ensureDefault` recreates it on the next read, so
+						  there is no state in which the action could succeed.
+						*/}
+						{project.isDefault ? null : (
+							<div className="mt-2 flex justify-end">
+								<ConfirmDeleteDialog
+									blockedReason={
+										count > 0
+											? `${count} runtime${count === 1 ? " is" : "s are"} still in this project. Delete or move ${count === 1 ? "it" : "them"} first — deleting a project never deletes what is inside it.`
+											: null
+									}
+									confirmValue={project.name}
+									description={
+										<>
+											This removes the project only. It cannot be undone, and
+											the name becomes available again.
+										</>
+									}
+									label="project name"
+									onConfirm={async () => {
+										await request(`/v1/projects/${project.projectId}`, {
+											method: "DELETE",
+										});
+										router.refresh();
+									}}
+									title={`Delete ${project.name}`}
+									trigger={
+										<Button size="sm" variant="ghost">
+											<Trash2 className="size-3.5" />
+											Delete
+										</Button>
+									}
+								/>
+							</div>
+						)}
 					</FadeIn>
 				);
 			})}

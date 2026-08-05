@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { DeleteRuntimeButton } from "@/components/dashboard/delete-runtime-button";
 import { RuntimeKeysCard } from "@/components/dashboard/runtime-keys-card";
 import { FadeIn } from "@/components/motion/fade-in";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,7 @@ export default async function RuntimeDetailPage({
 							<Button variant="secondary" href="/executions">
 								View executions
 							</Button>
+							<DeleteRuntimeButton runtimeId={runtime.runtimeId} />
 						</>
 					}
 				/>

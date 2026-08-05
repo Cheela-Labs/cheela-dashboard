@@ -3,6 +3,8 @@ export type RuntimeTier = "free" | "pro" | "enterprise";
 
 export type RuntimeSummary = {
 	runtimeId: string;
+	/** The project this runtime is filed under. Absent on pre-projects runtimes. */
+	projectId?: string;
 	version: string;
 	tier: RuntimeTier;
 	capabilities: string[] | Array<{ name: string }>;
@@ -35,6 +37,16 @@ export type RuntimeSummary = {
 		status: "active";
 		deployedAt?: string;
 	} | null;
+};
+
+/** A grouping of runtimes within one owner, as the server records it. */
+export type Project = {
+	projectId: string;
+	name: string;
+	/** Exactly one per owner. Where a runtime lands when none is named. */
+	isDefault: boolean;
+	createdAt: string;
+	updatedAt: string;
 };
 
 export type ExecutionSummary = {

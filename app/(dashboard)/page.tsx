@@ -15,12 +15,19 @@ import {
 	fetchExecutions,
 	fetchRuntimes,
 } from "@/lib/live-data";
+import { resolveProjects } from "@/lib/projects-server";
 import { formatDuration, formatNumber } from "@/lib/utils";
 
 export default async function OverviewPage() {
+	// Runtimes are scoped to the selected project; executions and analytics are
+	// not, because the server has no project filter for them — they are metered
+	// and aggregated per owner. Saying so here beats a reader assuming the whole
+	// page narrowed.
+	const { selectedProjectId } = await resolveProjects();
+
 	const [runtimesResult, executionsResult, analyticsResult] =
 		await Promise.allSettled([
-			fetchRuntimes(),
+			fetchRuntimes(selectedProjectId),
 			fetchExecutions(8),
 			fetchAnalytics(),
 		]);

@@ -66,7 +66,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function WorkspaceSwitcher({ onNavigate }: { onNavigate?: () => void }) {
-	const { projects, selectedProject, selectProject, createProject } =
+	const { projects, selectedProject, selectProject, createProject, pending } =
 		useProjects();
 	const [open, setOpen] = useState(false);
 	const pathname = usePathname();
@@ -89,7 +89,7 @@ function WorkspaceSwitcher({ onNavigate }: { onNavigate?: () => void }) {
 						WORKSPACE
 					</div>
 					<div className="mt-2 text-sm font-medium text-console-fg">
-						{selectedProject.name}
+						{selectedProject?.name ?? "—"}
 					</div>
 					<div className="mt-1 text-2xs text-console-fg-muted">
 						{projects.length} project{projects.length === 1 ? "" : "s"}
@@ -107,16 +107,16 @@ function WorkspaceSwitcher({ onNavigate }: { onNavigate?: () => void }) {
 				<div className="mt-2 space-y-1 rounded-md border border-console-border bg-ink-0 p-2">
 					{projects.map((project) => (
 						<button
-							key={project.id}
+							key={project.projectId}
 							type="button"
 							onClick={() => {
-								selectProject(project.id);
+								void selectProject(project.projectId);
 								setOpen(false);
 								onNavigate?.();
 							}}
 							className={cn(
 								"flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-left text-sm transition-colors",
-								project.id === selectedProject.id
+								project.projectId === selectedProject?.projectId
 									? "bg-accent/15 text-console-fg"
 									: "text-console-fg-muted hover:bg-white/[0.03] hover:text-console-fg",
 							)}
@@ -127,14 +127,25 @@ function WorkspaceSwitcher({ onNavigate }: { onNavigate?: () => void }) {
 					))}
 					<button
 						type="button"
-						onClick={() => {
+						disabled={pending}
+						onClick={async () => {
 							const name = window.prompt("Project name");
 							if (!name?.trim()) return;
-							createProject(name);
 							setOpen(false);
 							onNavigate?.();
+							// Awaited so a failure surfaces instead of the menu closing on
+							// a project that was never created.
+							try {
+								await createProject(name);
+							} catch (error) {
+								window.alert(
+									error instanceof Error
+										? error.message
+										: "Could not create the project",
+								);
+							}
 						}}
-						className="flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-left text-sm text-accent transition-colors hover:bg-white/[0.03]"
+						className="flex w-full items-center gap-2 rounded-sm px-3 py-2.5 text-left text-sm text-accent transition-colors hover:bg-white/[0.03] disabled:opacity-50"
 					>
 						<Plus className="size-3.5" />
 						Create New Project

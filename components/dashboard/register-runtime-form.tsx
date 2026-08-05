@@ -10,7 +10,7 @@ import { useCheelaApi } from "@/lib/use-cheela-api";
 
 export function RegisterRuntimeForm() {
 	const { request } = useCheelaApi();
-	const { selectedProjectId, assignRuntime } = useProjects();
+	const { selectedProjectId } = useProjects();
 	const router = useRouter();
 	const [error, setError] = useState<string | null>(null);
 	const [keys, setKeys] = useState<{
@@ -42,6 +42,10 @@ export function RegisterRuntimeForm() {
 				body: JSON.stringify({
 					version: form.get("version") || "0.0.0",
 					...(name ? { name } : {}),
+					// The server files it here. Omitting it lands the runtime in the
+					// owner's default project, which is where every runtime used to go
+					// regardless of what the switcher said.
+					...(selectedProjectId ? { projectId: selectedProjectId } : {}),
 				}),
 			});
 
@@ -51,9 +55,6 @@ export function RegisterRuntimeForm() {
 				publicKey: result.publicKey,
 				secret: result.secret,
 			});
-			if (selectedProjectId) {
-				assignRuntime(result.runtimeId, selectedProjectId);
-			}
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Registration failed");
 		} finally {

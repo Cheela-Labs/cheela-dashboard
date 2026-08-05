@@ -1,21 +1,39 @@
-"use client";
-
-import { FolderKanban, Plus } from "lucide-react";
+import { CreateProjectButton } from "@/components/dashboard/create-project-button";
+import { ProjectGrid } from "@/components/dashboard/project-grid";
 import { FadeIn } from "@/components/motion/fade-in";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
-import { useProjects } from "@/lib/projects";
-import { cn } from "@/lib/utils";
+import { fetchRuntimes } from "@/lib/live-data";
+import { resolveProjects } from "@/lib/projects-server";
 
-export default function WorkspacePage() {
-	const {
-		projects,
-		selectedProjectId,
-		selectProject,
-		createProject,
-		projectRuntimes,
-	} = useProjects();
+export const metadata = {
+	title: "Workspace",
+};
+
+export default async function WorkspacePage() {
+	const { projects, error } = await resolveProjects();
+
+	// One unfiltered listing bucketed by project, rather than one request per
+	// project: the tier caps runtimes at 1 (free) or 10 (pro), so this is a
+	// single page for almost every account and the alternative is N round trips
+	// to produce N counts.
+	let runtimeCounts: Record<string, number> = {};
+	let runtimesError: string | null = null;
+
+	try {
+		const runtimes = await fetchRuntimes();
+		runtimeCounts = runtimes.reduce<Record<string, number>>(
+			(counts, runtime) => {
+				if (!runtime.projectId) return counts;
+				counts[runtime.projectId] = (counts[runtime.projectId] ?? 0) + 1;
+				return counts;
+			},
+			{},
+		);
+	} catch (err) {
+		runtimesError =
+			err instanceof Error ? err.message : "Failed to load runtimes";
+	}
 
 	return (
 		<div className="space-y-10">
@@ -23,61 +41,32 @@ export default function WorkspacePage() {
 				<PageHeader
 					eyebrow="Workspace"
 					title="Projects"
-					description="Switch between projects in this browser. Runtimes stay owner-scoped on the server and can be linked to a project locally."
-					actions={
-						<Button
-							onClick={() => {
-								const name = window.prompt("Project name");
-								if (!name?.trim()) return;
-								createProject(name);
-							}}
-						>
-							<Plus className="size-4" />
-							Create New Project
-						</Button>
-					}
+					description="A project groups runtimes within your account. Switching one changes which runtimes the overview and registry show; billing, quota and analytics stay account-wide."
+					actions={<CreateProjectButton />}
 				/>
 			</FadeIn>
 
-			<div className="grid gap-4 lg:grid-cols-2">
-				{projects.map((project) => {
-					const runtimeCount = projectRuntimes(project.id).length;
-					const selected = project.id === selectedProjectId;
-					return (
-						<FadeIn key={project.id}>
-							<button
-								type="button"
-								onClick={() => selectProject(project.id)}
-								className="w-full text-left"
-							>
-								<Card
-									interactive
-									className={cn(
-										"space-y-4 p-6",
-										selected && "border-accent/35",
-									)}
-								>
-									<div className="flex items-start gap-3">
-										<div className="flex size-11 items-center justify-center rounded-lg border border-console-border bg-black/40 text-accent">
-											<FolderKanban className="size-5" />
-										</div>
-										<div>
-											<div className="text-lg font-medium text-console-fg">
-												{project.name}
-											</div>
-											<div className="mt-1 text-xs text-console-fg-muted">
-												{runtimeCount} linked runtime
-												{runtimeCount === 1 ? "" : "s"}
-												{selected ? " · current" : ""}
-											</div>
-										</div>
-									</div>
-								</Card>
-							</button>
-						</FadeIn>
-					);
-				})}
-			</div>
+			{error ? (
+				<Card className="border-danger/25 bg-danger/5 p-5 text-sm text-danger">
+					Could not load projects: {error}
+				</Card>
+			) : null}
+
+			{runtimesError ? (
+				<Card className="border-danger/25 bg-danger/5 p-5 text-sm text-danger">
+					Projects loaded, but their runtime counts did not: {runtimesError}
+				</Card>
+			) : null}
+
+			{projects.length === 0 ? (
+				error ? null : (
+					<Card className="p-5 text-sm text-console-fg-muted">
+						No projects yet.
+					</Card>
+				)
+			) : (
+				<ProjectGrid runtimeCounts={runtimeCounts} />
+			)}
 		</div>
 	);
 }

@@ -86,7 +86,7 @@ export function Topbar({ title }: { title?: string }) {
 			<div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4 px-6 py-4 sm:px-8 lg:pl-8">
 				<div className="pl-12 lg:pl-0">
 					<div className="font-mono text-sm font-semibold uppercase tracking-wide text-console-fg">
-						{title ?? selectedProject.name}
+						{title ?? selectedProject?.name ?? "Cheela"}
 					</div>
 					<div className="mt-0.5 text-2xs tracking-wide text-console-fg-muted">
 						CONTROL ROOM

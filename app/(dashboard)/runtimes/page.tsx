@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { fetchRuntimes } from "@/lib/live-data";
+import { resolveProjects } from "@/lib/projects-server";
 
 export const metadata = {
 	title: "Runtimes",
@@ -16,8 +17,10 @@ export default async function RuntimesPage() {
 	let runtimes: Awaited<ReturnType<typeof fetchRuntimes>> = [];
 	let error: string | null = null;
 
+	const { selectedProject, selectedProjectId } = await resolveProjectContext();
+
 	try {
-		runtimes = await fetchRuntimes();
+		runtimes = await fetchRuntimes(selectedProjectId);
 	} catch (err) {
 		error = err instanceof Error ? err.message : "Failed to load runtimes";
 	}
@@ -28,7 +31,11 @@ export default async function RuntimesPage() {
 				<PageHeader
 					eyebrow="Registry"
 					title="Runtimes"
-					description="Registered runtime metadata only — versions, capability manifests, provider config. Executable capability code never leaves customer infrastructure."
+					description={
+						selectedProject
+							? `Runtimes in ${selectedProject}. Registered metadata only — versions, capability manifests, provider config. Executable capability code never leaves customer infrastructure.`
+							: "Registered runtime metadata only — versions, capability manifests, provider config. Executable capability code never leaves customer infrastructure."
+					}
 					actions={
 						<RegisterRuntimeDialog
 							trigger={
@@ -69,4 +76,15 @@ export default async function RuntimesPage() {
 			</FadeIn>
 		</div>
 	);
+}
+
+/** Project name and id for this render, without a second round trip. */
+async function resolveProjectContext() {
+	const { projects, selectedProjectId } = await resolveProjects();
+	return {
+		selectedProjectId,
+		selectedProject: projects.find(
+			(project) => project.projectId === selectedProjectId,
+		)?.name,
+	};
 }

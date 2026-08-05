@@ -5,6 +5,7 @@ import type {
 	ExecutionSummary,
 	MessageShape,
 	OwnerUsage,
+	Project,
 	RuntimeSummary,
 	TraceCapabilityCall,
 } from "./types";
@@ -21,17 +22,23 @@ import { normalizeRuntime } from "./types";
  */
 const MAX_RUNTIME_PAGES = 20;
 
-export async function fetchRuntimes() {
+/**
+ * @param projectId Narrows the listing to one project. Omitted means every
+ * runtime the owner has, which is what the analytics and executions views want
+ * — those are owner-scoped on the server and have no project filter to pass.
+ */
+export async function fetchRuntimes(projectId?: string) {
 	const runtimes: RuntimeSummary[] = [];
 	let cursor: string | null = null;
 
 	for (let page = 0; page < MAX_RUNTIME_PAGES; page += 1) {
+		const query = new URLSearchParams();
+		if (projectId) query.set("projectId", projectId);
+		if (cursor) query.set("cursor", cursor);
+		const suffix = query.size > 0 ? `?${query}` : "";
+
 		const data: { runtimes: RuntimeSummary[]; nextCursor: string | null } =
-			await apiFetch(
-				cursor
-					? `/v1/runtimes?cursor=${encodeURIComponent(cursor)}`
-					: "/v1/runtimes",
-			);
+			await apiFetch(`/v1/runtimes${suffix}`);
 
 		runtimes.push(...data.runtimes);
 		cursor = data.nextCursor;
@@ -39,6 +46,18 @@ export async function fetchRuntimes() {
 	}
 
 	return runtimes.map(normalizeRuntime);
+}
+
+/**
+ * The owner's projects.
+ *
+ * `GET /v1/projects` creates the default on first read, so this never returns
+ * an empty list for a live account — which is what lets the selector treat
+ * "no projects" as an API failure rather than a state to render.
+ */
+export async function fetchProjects() {
+	const data = await apiFetch<{ projects: Project[] }>("/v1/projects");
+	return data.projects;
 }
 
 export async function fetchRuntime(runtimeId: string) {

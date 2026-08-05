@@ -1,9 +1,7 @@
 "use client";
 
-import { Bell } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { UserMenu } from "@/components/layout/user-menu";
-import { Button } from "@/components/ui/button";
 import { useProjects } from "@/lib/projects";
 import { useCheelaApi } from "@/lib/use-cheela-api";
 
@@ -135,9 +133,9 @@ export function Topbar({ title }: { title?: string }) {
 						</span>
 					</div>
 
-					<Button variant="ghost" size="sm" aria-label="Notifications">
-						<Bell className="size-4" />
-					</Button>
+					{/* No notification bell: nothing in the platform produces a
+					    notification, so the button opened nothing and its presence
+					    promised a feature that does not exist. */}
 					<UserMenu />
 				</div>
 			</div>

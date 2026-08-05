@@ -271,8 +271,7 @@ export function RuntimeKeysCard({
 						className={inputClass}
 					/>
 					<span className="block text-xs text-console-fg-muted">
-						Leave blank to allow any origin. An embeddable key with no origin
-						restriction is a blank cheque against your provider quota.
+						Leave blank to allow any origin.
 					</span>
 				</label>
 

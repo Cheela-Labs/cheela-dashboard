@@ -152,9 +152,6 @@ export function RegisterRuntimeForm() {
 						maxLength={100}
 						className="w-full rounded-lg border border-console-border bg-black/40 px-4 py-3 text-console-fg outline-none transition focus:border-accent/60"
 					/>
-					<span className="block text-xs text-console-fg-muted">
-						How this runtime is identified everywhere in the dashboard.
-					</span>
 				</label>
 
 				<label className="block space-y-2 text-sm">
@@ -165,11 +162,6 @@ export function RegisterRuntimeForm() {
 						className="w-full rounded-lg border border-console-border bg-black/40 px-4 py-3 text-console-fg outline-none transition focus:border-accent/60"
 					/>
 				</label>
-
-				<p className="text-sm leading-6 text-console-fg-muted">
-					Provider, model, and capabilities are configured locally and published
-					with <code className="text-accent">cheela deploy</code>.
-				</p>
 
 				{error ? <p className="text-sm text-danger">{error}</p> : null}
 

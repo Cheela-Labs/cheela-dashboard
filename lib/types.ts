@@ -133,7 +133,24 @@ export type AnalyticsSummary = {
 		detailedPercentiles: boolean;
 		detailedRuntimeBreakdown: boolean;
 		timeSeries: boolean;
+		trends: boolean;
 	};
+	/**
+	 * This window against the one immediately before it.
+	 *
+	 * Null when the tier does not include it, or when the comparison would be
+	 * dishonest — the server withholds it when the baseline window has partly
+	 * aged out of retention.
+	 */
+	trend?: {
+		previousRequests: number;
+		/** Null when the baseline was zero. There is no change from nothing. */
+		changePercent: number | null;
+		from: string;
+		to: string;
+	} | null;
+	/** Busiest UTC hour of day across the range. Null when withheld or no traffic. */
+	peakHour?: { hour: number; requests: number } | null;
 };
 
 export type OwnerUsage = {

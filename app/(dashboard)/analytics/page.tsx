@@ -133,6 +133,7 @@ export default async function AnalyticsPage({
 		detailedPercentiles: true,
 		detailedRuntimeBreakdown: true,
 		timeSeries: true,
+		trends: true,
 	};
 
 	const runtimeEntries = Object.entries(data.runtimeUsage).sort(
@@ -201,6 +202,32 @@ export default async function AnalyticsPage({
 		{ label: "Error count", value: formatNumber(data.errors) },
 	];
 
+	/*
+	 * Trend and peak hour, appended rather than woven in, because they are the
+	 * two cells a free account does not get and keeping them last means the grid
+	 * does not reflow around a hole.
+	 *
+	 * Both are real: the trend is a second totals query over the preceding window
+	 * of equal length, the peak hour is the hourly rollup grouped on hour-of-day.
+	 * Neither is the design's invented "+18% week over week" or "2–4pm UTC".
+	 */
+	if (entitled.trends) {
+		metrics.push({
+			label: `Trend vs previous ${activeDays}d`,
+			value:
+				data.trend?.changePercent == null
+					? "—"
+					: `${data.trend.changePercent > 0 ? "+" : ""}${data.trend.changePercent}%`,
+		});
+		metrics.push({
+			label: "Busiest hour (UTC)",
+			value:
+				data.peakHour == null
+					? "—"
+					: `${String(data.peakHour.hour).padStart(2, "0")}:00`,
+		});
+	}
+
 	return (
 		<div className="space-y-8">
 			<FadeIn>
@@ -214,9 +241,6 @@ export default async function AnalyticsPage({
 					}
 					actions={
 						usage ? (
-							// Names the analytics depth, not just the plan — the design's
-							// "Free analytics" / "Pro analytics" badge. On this page the
-							// distinction that matters is what the numbers below include.
 							<span
 								className={
 									entitled.timeSeries
@@ -224,7 +248,7 @@ export default async function AnalyticsPage({
 										: "rounded-pill border border-console-border px-2.5 py-1 text-2xs uppercase tracking-wide text-console-fg-muted"
 								}
 							>
-								{usage.tier} analytics
+								{usage.tier}
 							</span>
 						) : null
 					}

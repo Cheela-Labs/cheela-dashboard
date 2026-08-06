@@ -10,7 +10,6 @@ export default function NewRuntimePage() {
 				<PageHeader
 					eyebrow="Registry"
 					title="Register runtime"
-					description="Create a runtime identity and API key. Configure provider, model, and capabilities locally in cheela.config.ts and deploy with the CLI."
 					actions={
 						<Button variant="secondary" href="/runtimes">
 							Back to runtimes

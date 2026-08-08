@@ -1,12 +1,29 @@
 import { notFound } from "next/navigation";
 import { FadeIn } from "@/components/motion/fade-in";
-import { Stagger, StaggerItem, StaggerLine } from "@/components/motion/stagger";
+import { Stagger, StaggerItem } from "@/components/motion/stagger";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { fetchExecution } from "@/lib/live-data";
 import { cn, formatDuration, formatRelativeTime } from "@/lib/utils";
+
+/**
+ * The rail between the steps, drawn per step instead of once down the track.
+ *
+ * A single full-height rule cannot know where the first and last dots are —
+ * both nodes size to their own text, and the last one grows when it carries an
+ * error message — so it overshot both ends. Each step owning its own segment
+ * makes the line start at the first dot and stop at the last whatever those
+ * nodes measure. It also puts the rail above the translucent card backgrounds
+ * rather than striping through them.
+ *
+ * `left-[18px]` is the dot centre in node coordinates (`left-3` plus half of
+ * `size-3`). The callers' `-bottom-5` overshoots the 16px `space-y-4` gap by
+ * enough to cover both cards' 1px borders; overlap is invisible on a solid
+ * line, a 2px break would not be.
+ */
+const RAIL = "absolute left-[18px] w-px bg-accent/40";
 
 export default async function ExecutionDetailPage({
 	params,
@@ -106,15 +123,10 @@ export default async function ExecutionDetailPage({
 							<h2 className="text-lg font-medium text-console-fg">
 								Execution timeline
 							</h2>
-							<Stagger className="relative space-y-4 pl-2" delay={0.2}>
-								{/*
-								  The spine has to clear the container's own `pl-2` to reach the
-								  node dots: 8px padding + the node's 1px border + the dot's
-								  `left-3` + half of `size-3` puts every dot's centre at 27px.
-								*/}
-								<StaggerLine className="absolute bottom-2 left-[27px] top-2 w-px bg-accent/40" />
+							<Stagger className="space-y-4 pl-2" delay={0.2}>
 								<StaggerItem className="relative rounded-lg border border-console-border bg-black/40 py-3 pl-12 pr-4">
-									<div className="absolute left-3 top-1/2 size-3 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_0_6px] shadow-accent/15" />
+									<div className={cn(RAIL, "-bottom-5 top-1/2")} />
+									<div className="absolute left-3 top-1/2 size-3 -translate-y-1/2 rounded-full border border-console-border bg-black" />
 									<div className="text-sm text-console-fg">User message</div>
 									<div className="mt-1 text-xs text-console-fg-muted">
 										Content is not stored
@@ -125,6 +137,7 @@ export default async function ExecutionDetailPage({
 										key={call.toolCallId}
 										className="relative rounded-lg border border-console-border bg-black/40 py-3 pl-12 pr-4"
 									>
+										<div className={cn(RAIL, "-bottom-5 top-0")} />
 										<div className="absolute left-3 top-1/2 size-3 -translate-y-1/2 rounded-full border border-console-border bg-black" />
 										<div className="flex flex-wrap items-center justify-between gap-2">
 											<div className="font-mono text-sm text-console-fg">
@@ -148,10 +161,13 @@ export default async function ExecutionDetailPage({
 										isRunning ? "border-accent/30" : "border-console-border",
 									)}
 								>
+									<div className={cn(RAIL, "bottom-1/2 top-0")} />
 									{/*
-									  A run still in flight gets a live dot. The ping ring is
-									  purely decorative — the state is already in the status
-									  badge and in the line of text below it.
+									  The accent dot marks where the run got to, so it belongs on
+									  the head of the trace rather than on the opening message. A
+									  run still in flight pings; a finished one just glows. The
+									  ring is decorative either way — the state is already in the
+									  status badge and in the line of text below.
 									*/}
 									{isRunning ? (
 										<span
@@ -162,7 +178,7 @@ export default async function ExecutionDetailPage({
 											<span className="absolute inset-0 rounded-full bg-accent" />
 										</span>
 									) : (
-										<div className="absolute left-3 top-1/2 size-3 -translate-y-1/2 rounded-full border border-console-border bg-black" />
+										<div className="absolute left-3 top-1/2 size-3 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_0_6px] shadow-accent/15" />
 									)}
 									<div className="text-sm text-console-fg">Final response</div>
 									<div className="mt-1 text-xs text-console-fg-muted">

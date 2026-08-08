@@ -6,12 +6,11 @@ import type { ReactNode } from "react";
 /**
  * Sequenced entrance for a list of steps.
  *
- * `Stagger` is the variant root; `StaggerItem` and `StaggerLine` inherit their
- * cue from it through motion's context rather than props, which is what lets
- * the items themselves stay server-rendered — only these three wrappers cross
- * the client boundary. Plain elements in between do not interrupt the
- * propagation, so a positioned spine or a layout div can sit anywhere in the
- * subtree.
+ * `Stagger` is the variant root and `StaggerItem` inherits its cue from it
+ * through motion's context rather than props, which is what lets the items
+ * themselves stay server-rendered — only these two wrappers cross the client
+ * boundary. Plain elements in between do not interrupt the propagation, so a
+ * layout div can sit anywhere in the subtree.
  *
  * Use this instead of a `FadeIn` per row: `FadeIn` takes a hardcoded `delay`,
  * so a list of unknown length would need the caller to invent one per index.
@@ -74,33 +73,5 @@ export function StaggerItem({
 		>
 			{children}
 		</motion.div>
-	);
-}
-
-/**
- * The rule connecting the steps — draws itself downward ahead of them.
- *
- * Separate from `StaggerItem` because a vertical hairline that slides down 8px
- * reads as a glitch; growing along its own length reads as a track being laid.
- * The caller must not put a Tailwind transform on this, since motion owns the
- * element's `transform`.
- */
-export function StaggerLine({ className }: { className?: string }) {
-	const reducedMotion = useReducedMotion();
-
-	if (reducedMotion) {
-		return <div className={className} />;
-	}
-
-	return (
-		<motion.div
-			className={className}
-			style={{ transformOrigin: "top" }}
-			variants={{
-				hidden: { scaleY: 0, opacity: 0 },
-				visible: { scaleY: 1, opacity: 1 },
-			}}
-			transition={{ duration: 0.5, ease: "easeOut" }}
-		/>
 	);
 }
